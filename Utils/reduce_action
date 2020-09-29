@@ -16,7 +16,7 @@ def arg_parse():
                    help='The action ID',
                    type=str)
 
-    parser.add_argument('-b', 
+    p.add_argument('-b', 
                 '--photometry_catalogue',
                 help='The catalogue file for which to extract photometry with. If None, we will use the reference catalogue associate with the reference image.',
                 default='None', type=str)
