@@ -43,7 +43,7 @@ if __name__=="__main__":
 
     # Now check for AG reference image with valid WCS
     print('\tGetting autoguider information')
-    autoguider_image_information = get_autoguider_information(field, camera)
+    autoguider_image_information = get_autoguider_information(action_info['field'], camera)
     print(autoguider_image_information)
 
     # Now check for AG reference image catalogue from which we will generate the image WCS
