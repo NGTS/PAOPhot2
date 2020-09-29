@@ -104,16 +104,16 @@ def get_action_info(action_id):
 
 
 def get_images_information_for_action(action_id):
-    cmd = 'select * from raw_image_list where action_id={:} AND image_class="SCIENCE" and image_type="IMAGE";'.format(action_id)
+    qry = 'select * from raw_image_list where action_id={:} AND image_class="SCIENCE" and image_type="IMAGE";'.format(action_id)
     with open_db(cur_class='dict') as cur:
-        cur.execute(qry, qry_args)
+        cur.execute(qry)
         result = cur.fetchone()
     return result
 
 
 def get_autoguider_information(field, camera_id):
-    cmd = 'select * from autoguider_refimage WHERE field="{:}" AND camera_id={:};'.format(field, camera_id)
+    qry = 'select * from autoguider_refimage WHERE field="{:}" AND camera_id={:};'.format(field, camera_id)
     with open_db(cur_class='dict') as cur:
-        cur.execute(qry, qry_args)
+        cur.execute(qry)
         result = cur.fetchone()
     return result
