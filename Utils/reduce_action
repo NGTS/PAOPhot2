@@ -120,7 +120,7 @@ if __name__=="__main__":
             continue
         else:
             # Create the WCSPhot command
-            cmd = 'python3 {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['refcatpipe2_path'],
+            cmd = 'python3 {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['WCSPhotpipe_path'],
                                                                                                     image_path,
                                                                                                     solved_autoguider_image_location,
                                                                                                     solved_autoguider_catalogue_location,
