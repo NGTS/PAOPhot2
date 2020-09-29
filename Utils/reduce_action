@@ -39,12 +39,12 @@ if __name__=="__main__":
     # Get the action information
     action_info = get_action_info(args.action) 
     print('\tDetails:')
-    for key in action_info.keys(): print('\t\t{:>15} : {:}'.format(key, action_info[key])) 
+    for key in action_info.keys(): print('\t\t{:<15} : {:}'.format(key, action_info[key])) 
 
     # Now check for AG reference image with valid WCS
-    print('\tGetting autoguider information')
+    print('\tAutoguider information')
     autoguider_image_information = get_autoguider_information(action_info['field'], action_info['camera_id'])
-    print(autoguider_image_information)
+    for key in autoguider_image_information.keys(): print('\t\t{:<15} : {:}'.format(key, autoguider_image_information[key])) 
 
     # Now check for AG reference image catalogue from which we will generate the image WCS
     print('\tChecking to see if autotguider image has been solved... ', end='')
