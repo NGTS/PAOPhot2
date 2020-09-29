@@ -2,7 +2,7 @@
 
 # Imports
 import argparse, os, sys
-from PAOPhot2.db import is_action_ready_to_reduce , get_images_information_for_action, PAOPhot_paths 
+from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, PAOPhot_paths 
 
 # PAOphot path
 
