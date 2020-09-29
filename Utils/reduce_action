@@ -72,7 +72,7 @@ if __name__=="__main__":
         # Now solve the autoguider reference image for a WCS solution 
         cmd = 'python3 {:}/solve_ref_images.py {:} {:} --indir {:} --outdir {:}'.format(PAOPhot_paths['refcatpipe2_path'], 
                                                                                         solved_autoguider_catalogue_location, 
-                                                                                        solved_autoguider_image_location, 
+                                                                                        autoguider_image_information['filename'], 
                                                                                         '/ngts/autoguider_ref',  
                                                                                         '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']))
         print(cmd)
