@@ -16,7 +16,7 @@ def arg_parse():
                    help='The action ID',
                    type=str)
 
-parser.add_argument('-b', 
+    parser.add_argument('-b', 
                 '--photometry_catalogue',
                 help='The catalogue file for which to extract photometry with. If None, we will use the reference catalogue associate with the reference image.',
                 default='None', type=str)
@@ -52,7 +52,7 @@ if __name__=="__main__":
     solved_autoguider_catalogue_location = '{:}/autotguider_images_and_catalogue/{:}'.format(PAOPhot_paths['PAOPhot2_path'], autoguider_image_information['filename'][:-5] + '_reference_catalogue.fits')
 
     exit()
-    
+
 
     if not os.path.isfile(solved_autoguider_catalogue_location) or not os.path.isfile(solved_autoguider_image_location):
         print(' No autoguider products found, running refcatpipe2')
