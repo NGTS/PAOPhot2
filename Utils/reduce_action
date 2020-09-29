@@ -1,0 +1,140 @@
+#!/home/sam/anaconda3/bin/python
+
+# Imports
+import argparse, os, sys
+from PAOPhot2.db import is_action_ready_to_reduce , get_images_information_for_action, PAOPhot_paths 
+
+# PAOphot path
+
+# Arg parser
+def arg_parse():
+    """
+    Parse the command line arguments
+    """
+    p = argparse.ArgumentParser("Reduce whole actions.")
+    p.add_argument('action',
+                   help='The action ID',
+                   type=str)
+
+parser.add_argument('-b', 
+                '--photometry_catalogue',
+                help='The catalogue file for which to extract photometry with. If None, we will use the reference catalogue associate with the reference image.',
+                default='None', type=str)
+                   
+        
+    return p.parse_args()
+
+
+
+# Main loop
+if __name__=="__main__":
+    # First, pars the arguments
+    args = arg_parse()
+
+    # Now get the action status
+    status = is_action_ready_to_reduce(args.action)
+    if status : print('Reducing action {:}'.format(args.action))
+    else      : print('Action  {:} is not ready to reduce.'.format(args.action))
+    
+    # Get the action information
+    action_info = get_action_info(args.action) 
+    print('\tDetails:')
+    for key in action_info.keys()): print('\t\t{:>15} : {:}'.format(key, action_info[key])) 
+
+    # Now check for AG reference image with valid WCS
+    print('\tGetting autoguider information')
+    autoguider_image_information = get_autoguider_information(field, camera)
+    print(autoguider_image_information)
+
+    # Now check for AG reference image catalogue from which we will generate the image WCS
+    print('\tChecking to see if autotguider image has been solved... ', end='')
+    solved_autoguider_image_location = '{:}/autotguider_images_and_catalogue/{:}'.format(PAOPhot_paths['PAOPhot2_path'], autoguider_image_information['filename'])
+    solved_autoguider_catalogue_location = '{:}/autotguider_images_and_catalogue/{:}'.format(PAOPhot_paths['PAOPhot2_path'], autoguider_image_information['filename'][:-5] + '_reference_catalogue.fits')
+
+    if not os.path.isfile(solved_autoguider_catalogue_location) or not os.path.isfile(solved_autoguider_image_location):
+        print(' No autoguider products found, running refcatpipe2')
+        # We havent got the solved autoguider reference image with a stamped WCS solution
+        # Lets call refcatpipe2 and save it here.
+
+        # First, lets get the  autoguider_obstart for calcualtion of proper motion in the catalogue.
+        autoguider_obstart = fits.open('/ngts/autoguider_ref/' + autoguider_image_information['filename'])[0].header['OBSSTART']
+        
+        # First make the reference catalogue
+        cmd = 'python3 {:}/make_ref_catalog.py {:} {:} 3.0 3.0 "{:}" "{:}"'.format(PAOPhot_paths['refcatpipe2_path'], 
+                                                                                   action_info['ra_target_deg'], 
+                                                                                   action_info['dec_target_deg'], 
+                                                                                   autoguider_obstart , 
+                                                                                   solved_autoguider_catalogue_location )
+        print(cmd)
+        os.system(cmd) 
+
+        # Now solve the autoguider reference image for a WCS solution 
+        cmd = 'python3 {:}/solve_ref_images.py {:} {:} --indir {:} --outdir {:}'.format(PAOPhot_paths['refcatpipe2_path'], 
+                                                                                        solved_autoguider_catalogue_location, 
+                                                                                        solved_autoguider_image_location, 
+                                                                                        '/ngts/autoguider_ref',  
+                                                                                        '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_path']))
+        print(cmd)
+        os.system(cmd) 
+
+        # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
+        # Lets check
+        print('\t\tValidating refcatpipe2 outputs... ')
+        REFCATPIPE2_ERROR = False
+        if not os.path.isfile(solved_autoguider_catalogue_location) :
+            print('\t\tCould not find {:}'.format(solved_autoguider_catalogue_location))
+            REFCATPIPE2_ERROR = True 
+        if not os.path.isfile(solved_autoguider_image_location) :
+            print('\t\tCould not find {:}'.format(solved_autoguider_image_location))
+            REFCATPIPE2_ERROR = True 
+        if REFCATPIPE2_ERROR : 
+            print('\t\tError with refcatpipe2, one or more outputs missing. Check logs. ')
+            exit() 
+        else : print('refcatpipe2 ran OK')
+    else : print('Products found.')
+
+
+    # Now check the photometry catalogue, using thr reference catalogue as a failsafe
+    if args.photometry_catalogue != 'None': photometry_catalogue = solved_autoguider_catalogue_location
+    else : photometry_catalogue = args.photometry_catalogue
+
+
+    # Get the image information associated with this action
+    images_information = get_images_information_for_action(args.action)
+    print('Found information for {:,} science images'.format(len(images_information['image_id'])))
+
+    # Create the output directory 
+    output_directory = '{:}/products/action{:}'.format(PAOPhot_paths['PAOPhot2_path'], args.action)
+
+    # loop over the images, running WCSPhot for each 
+    for i in range(len(images_information['image_id'])):
+        #image_path = '/ngts/das01/action254027_observeField/IMAGE81120200928093346.fits.bz2'
+        image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
+                                                                                        args.action, 
+                                                                                        images_information['image_id'][i])
+        if not os.path.isfile(image_path) :
+            print('Unable to find {:}'.format(image_path))
+            continue
+        else:
+            # Create the WCSPhot command
+            cmd = 'python3 {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['refcatpipe2_path'],
+                                                                                                    image_path,
+                                                                                                    solved_autoguider_image_location,
+                                                                                                    solved_autoguider_catalogue_location,
+                                                                                                    photometry_catalogue,
+                                                                                                    output_directory)
+
+    print('\tImage reduction complete. Counting number of photfiles. ')
+    number_of_reduced = 0.
+    for i in range(len(images_information['image_id'])):
+        image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
+                                                                                        args.action, 
+                                                                                        images_information['image_id'][i])
+        phot_file = '{:}/IMAGE{:}.phot'.format(output_directory,
+                                                images_information['image_id'][i])
+        if os.path.isfile(phot_file) : number_of_reduced += 1
+        else : print('\t\t{:} failed to reduce'.format(image_path))
+
+    print('\tSummary')
+    print('\t\t{:,} frames reduced out of {:,} frames [{:.2f} %]'.format(number_of_reduced, len(images_information['image_id']), 100*number_of_reduced/len(images_information['image_id']) ))
+    print('\tFinished.')
