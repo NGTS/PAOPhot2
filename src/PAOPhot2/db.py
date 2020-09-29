@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from collections import defaultdict
 import pymysql
 
-PAOPhot_paths = {'PAOPhot2_path' : '/ngts/staging/archive/PAOPhot2',
+PAOPhot_paths = {'PAOPhot2_data_path' : '/ngts/staging/archive/PAOPhot2',
               'refcatpipe2_path' : '/home/ops/dev/refcatpipe2',
               'WCSPhotpipe_path'  : '/home/ops/dev/WCSPhotPipe'}
 
