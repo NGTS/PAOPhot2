@@ -3,6 +3,7 @@
 # Imports
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, PAOPhot_paths , get_autoguider_information
+from astropy.io import fits 
 
 # PAOphot path
 
