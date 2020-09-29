@@ -105,7 +105,6 @@ def get_action_info(action_id):
 
 def get_images_information_for_action(action_id):
     qry = 'select * from raw_image_list where action_id={:} AND image_class="SCIENCE" and image_type="IMAGE";'.format(action_id)
-    print(qry)
     with open_db(cur_class='dict') as cur:
         cur.execute(qry)
         result = cur.fetchall()

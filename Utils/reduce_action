@@ -103,7 +103,7 @@ if __name__=="__main__":
     # Get the image information associated with this action
     # list of dictionaries, not disctionary of lists
     images_information = get_images_information_for_action(args.action)
-    print('Found information for {:,} science images'.format(len(images_information)))
+    print('\t\tFound information for {:,} science images'.format(len(images_information)))
 
     # Create the output directory 
     output_directory = '{:}/photometry/action{:}'.format(PAOPhot_paths['PAOPhot2_data_path'], args.action)
