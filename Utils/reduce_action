@@ -94,7 +94,6 @@ if __name__=="__main__":
             exit() 
         else : print('refcatpipe2 ran OK')
     else : print('Products found.')
-    exit()
 
     # Now check the photometry catalogue, using thr reference catalogue as a failsafe
     if args.photometry_catalogue != 'None': photometry_catalogue = solved_autoguider_catalogue_location
@@ -102,27 +101,20 @@ if __name__=="__main__":
 
 
     # Get the image information associated with this action
-    images_information = get_images_information_for_action(args.action)
-
-
-    #""""""""""""""""""""""""""""""""""""""""""""""""""""""
     # list of dictionaries, not disctionary of lists
-    print('Found information for {:,} science images'.format(len(images_information['image_id'])))
-    #""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-
-
-
+    images_information = get_images_information_for_action(args.action)
+    print('Found information for {:,} science images'.format(len(images_information)))
 
     # Create the output directory 
     output_directory = '{:}/photometry/action{:}'.format(PAOPhot_paths['PAOPhot2_data_path'], args.action)
+    os.system('mkdir {:}'.format(output_directory))
 
     # loop over the images, running WCSPhot for each 
-    for i in range(len(images_information['image_id'])):
+    for i in range(len(images_information)):
         #image_path = '/ngts/das01/action254027_observeField/IMAGE81120200928093346.fits.bz2'
         image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
                                                                                         args.action, 
-                                                                                        images_information['image_id'][i])
+                                                                                        images_information[i]['image_id'])
         if not os.path.isfile(image_path) :
             print('Unable to find {:}'.format(image_path))
             continue
@@ -134,7 +126,9 @@ if __name__=="__main__":
                                                                                                     solved_autoguider_catalogue_location,
                                                                                                     photometry_catalogue,
                                                                                                     output_directory)
+            print(cmd) 
 
+    exit()
     print('\tImage reduction complete. Counting number of photfiles. ')
     number_of_reduced = 0.
     for i in range(len(images_information['image_id'])):
