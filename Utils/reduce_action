@@ -4,6 +4,7 @@
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, PAOPhot_paths , get_autoguider_information
 from astropy.io import fits 
+from multiprocessing import Pool 
 
 # PAOphot path
 
@@ -21,11 +22,42 @@ def arg_parse():
                 '--photometry_catalogue',
                 help='The catalogue file for which to extract photometry with. If None, we will use the reference catalogue associate with the reference image.',
                 default='None', type=str)
+
+
+    p.add_argument('-c', 
+                '--threads',
+                help='The number of processing threads [default= 2]',
+                default=2, type=int)
                    
         
     return p.parse_args()
 
 
+
+
+def photometry_worker(i):
+    #image_path = '/ngts/das01/action254027_observeField/IMAGE81120200928093346.fits.bz2'
+    image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
+                                                                                    args.action, 
+                                                                                    images_information[i]['image_id'])
+    if not os.path.isfile(image_path) :
+        print('Unable to find {:}'.format(image_path))
+        continue
+    else:
+        # Create the WCSPhot command
+        cmd = '/usr/local/anaconda3/bin/python {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['WCSPhotpipe_path'],
+                                                                                                image_path,
+                                                                                                solved_autoguider_image_location,
+                                                                                                solved_autoguider_catalogue_location,
+                                                                                                photometry_catalogue,
+                                                                                                output_directory)
+        print(cmd) 
+        os.system(cmd)
+
+        # Now compress this 
+        cmd = 'gzip -v {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
+        print(cmd)
+        os.system(cmd)
 
 # Main loop
 if __name__=="__main__":
@@ -110,30 +142,11 @@ if __name__=="__main__":
     os.system('mkdir {:}'.format(output_directory))
 
     # loop over the images, running WCSPhot for each 
-    for i in range(len(images_information))[:5]:
-        #image_path = '/ngts/das01/action254027_observeField/IMAGE81120200928093346.fits.bz2'
-        image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
-                                                                                        args.action, 
-                                                                                        images_information[i]['image_id'])
-        if not os.path.isfile(image_path) :
-            print('Unable to find {:}'.format(image_path))
-            continue
-        else:
-            # Create the WCSPhot command
-            cmd = '/usr/local/anaconda3/bin/python {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['WCSPhotpipe_path'],
-                                                                                                    image_path,
-                                                                                                    solved_autoguider_image_location,
-                                                                                                    solved_autoguider_catalogue_location,
-                                                                                                    photometry_catalogue,
-                                                                                                    output_directory)
-            print(cmd) 
-            os.system(cmd)
-
-            # Now compress this 
-            cmd = 'gzip -v {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
-            print(cmd)
-            os.system(cmd)
-
+    #for i in range(len(images_information))[:5]:
+    pool = Pool(args.threads)
+    pool.map(photometry_worker, len(images_information)[:8])
+    pool.close()
+    poo.join()
 
     exit()
     print('\tImage reduction complete. Counting number of photfiles. ')
