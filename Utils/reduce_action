@@ -122,7 +122,7 @@ if __name__=="__main__":
         os.system(cmd) 
 
         # Finally, we need to estimate what the dilution is for each target in the frame using NGTSDilution
-        cmd = '/usr/local/anaconda3/bin/python {:} {:} {:} --output_dir {:}--threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
+        cmd = '/usr/local/anaconda3/bin/python {:}/ngtsdilution.py {:} {:} --output_dir {:}--threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
                                                                         solved_autoguider_image_location,
                                                                         solved_autoguider_catalogue_location,
                                                                         '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']),
@@ -130,7 +130,7 @@ if __name__=="__main__":
                                                                         '{:}/NGTS_PRF/NG0029-3024_813_IMAGE81320191012010055_cat.npy'.format(PAOPhot_paths['NGTSDilution_path']))
         print(cmd)
         os.system(cmd) 
-        
+
         # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
         # Lets check
         print('\t\tValidating refcatpipe2 outputs... ')
