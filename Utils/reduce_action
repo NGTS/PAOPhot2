@@ -61,7 +61,7 @@ if __name__=="__main__":
         autoguider_obstart = fits.open('/ngts/autoguider_ref/' + autoguider_image_information['filename'])[0].header['OBSSTART']
         
         # First make the reference catalogue
-        cmd = 'python3 {:}/make_ref_catalog.py {:} {:} 3.0 3.0 "{:}" "{:}"'.format(PAOPhot_paths['refcatpipe2_path'], 
+        cmd = '/usr/local/anaconda3/bin/python {:}/make_ref_catalog.py {:} {:} 3.0 3.0 "{:}" "{:}"'.format(PAOPhot_paths['refcatpipe2_path'], 
                                                                                    action_info['ra_target_deg'], 
                                                                                    action_info['dec_target_deg'], 
                                                                                    autoguider_obstart , 
@@ -70,7 +70,7 @@ if __name__=="__main__":
         os.system(cmd) 
 
         # Now solve the autoguider reference image for a WCS solution 
-        cmd = 'python3 {:}/solve_ref_images.py {:} {:} --indir {:} --outdir {:}'.format(PAOPhot_paths['refcatpipe2_path'], 
+        cmd = '/usr/local/anaconda3/bin/python {:}/solve_ref_images.py {:} {:} --indir {:} --outdir {:}'.format(PAOPhot_paths['refcatpipe2_path'], 
                                                                                         solved_autoguider_catalogue_location, 
                                                                                         autoguider_image_information['filename'], 
                                                                                         '/ngts/autoguider_ref',  
@@ -120,7 +120,7 @@ if __name__=="__main__":
             continue
         else:
             # Create the WCSPhot command
-            cmd = 'python3 {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['WCSPhotpipe_path'],
+            cmd = '/usr/local/anaconda3/bin/python {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['WCSPhotpipe_path'],
                                                                                                     image_path,
                                                                                                     solved_autoguider_image_location,
                                                                                                     solved_autoguider_catalogue_location,
