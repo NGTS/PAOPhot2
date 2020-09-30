@@ -62,8 +62,8 @@ def photometry_worker(i):
 
         # Now compress this 
         cmd = 'gzip -fv {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
-        print(cmd)
-        os.system(cmd)
+        #print(cmd)
+        #os.system(cmd)
 
 # Main loop
 if __name__=="__main__":
