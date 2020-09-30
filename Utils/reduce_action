@@ -144,7 +144,7 @@ if __name__=="__main__":
     # loop over the images, running WCSPhot for each 
     #for i in range(len(images_information))[:5]:
     pool = Pool(args.threads)
-    pool.map(photometry_worker, len(images_information)[:8])
+    pool.map(photometry_worker, range(len(images_information))[:8])
     pool.close()
     poo.join()
 
