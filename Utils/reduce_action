@@ -175,12 +175,12 @@ if __name__=="__main__":
 
     # Create the output directory 
     output_directory = '{:}/photometry/action{:}'.format(PAOPhot_paths['PAOPhot2_data_path'], args.action)
-    os.system('mkdir {:}'.format(output_directory))
+    os.system('mkdir -p {:}'.format(output_directory))
 
     # loop over the images, running WCSPhot for each 
     #for i in range(len(images_information))[:5]:
     pool = Pool(args.threads)
-    pool.map(photometry_worker, range(len(images_information))[:8])
+    pool.map(photometry_worker, range(len(images_information))[:])
     pool.close()
     pool.join()
 
