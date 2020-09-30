@@ -67,7 +67,7 @@ if __name__=="__main__":
                                                                                    autoguider_obstart , 
                                                                                    solved_autoguider_catalogue_location )
         print(cmd)
-        #os.system(cmd) 
+        os.system(cmd) 
 
         # Now solve the autoguider reference image for a WCS solution 
         cmd = 'python3 {:}/solve_ref_images.py {:} {:} --indir {:} --outdir {:}'.format(PAOPhot_paths['refcatpipe2_path'], 
@@ -76,8 +76,7 @@ if __name__=="__main__":
                                                                                         '/ngts/autoguider_ref',  
                                                                                         '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']))
         print(cmd)
-        exit()
-        #os.system(cmd) 
+        os.system(cmd) 
 
         # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
         # Lets check
@@ -95,7 +94,6 @@ if __name__=="__main__":
         else : print('refcatpipe2 ran OK')
     else : print('Products found.')
 
-    exit() 
     
     # Now check the photometry catalogue, using thr reference catalogue as a failsafe
     if args.photometry_catalogue == 'None': photometry_catalogue = solved_autoguider_catalogue_location
@@ -129,6 +127,13 @@ if __name__=="__main__":
                                                                                                     photometry_catalogue,
                                                                                                     output_directory)
             print(cmd) 
+            os.system(cmd)
+
+            # Now compress this 
+            cmd = 'gzip -v {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
+            print(cmd)
+            os.system(cmd)
+
 
     exit()
     print('\tImage reduction complete. Counting number of photfiles. ')
