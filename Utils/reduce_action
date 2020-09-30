@@ -55,7 +55,7 @@ def photometry_worker(i):
         os.system(cmd)
 
         # Now compress this 
-        cmd = 'gzip -v {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
+        cmd = 'gzip -fv {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print(cmd)
         os.system(cmd)
 
