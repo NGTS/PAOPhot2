@@ -3,6 +3,7 @@
 # Imports
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, PAOPhot_paths , get_autoguider_information
+from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
 from astropy.io import fits 
 from multiprocessing import Pool 
 
@@ -89,7 +90,7 @@ if __name__=="__main__":
     solved_autoguider_image_location = '{:}/autotguider_images_and_catalogue/{:}'.format(PAOPhot_paths['PAOPhot2_data_path'], autoguider_image_information['filename'])
     solved_autoguider_catalogue_location = '{:}/autotguider_images_and_catalogue/{:}'.format(PAOPhot_paths['PAOPhot2_data_path'], autoguider_image_information['filename'][:-5] + '_reference_catalogue.fits')
 
-    if not os.path.isfile(solved_autoguider_catalogue_location) or not os.path.isfile(solved_autoguider_image_location):
+    if True: #not os.path.isfile(solved_autoguider_catalogue_location) or not os.path.isfile(solved_autoguider_image_location):
         print(' No autoguider products found, running refcatpipe2')
         # We havent got the solved autoguider reference image with a stamped WCS solution
         # Lets call refcatpipe2 and save it here.
@@ -104,7 +105,7 @@ if __name__=="__main__":
                                                                                    autoguider_obstart , 
                                                                                    solved_autoguider_catalogue_location )
         print(cmd)
-        os.system(cmd) 
+        #os.system(cmd) 
 
         # Check the catalogue has been made
         if not os.path.isfile(solved_autoguider_catalogue_location) : 
@@ -119,17 +120,18 @@ if __name__=="__main__":
                                                                                         '/ngts/autoguider_ref',  
                                                                                         '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']))
         print(cmd)
-        os.system(cmd) 
+        #os.system(cmd) 
 
         # Finally, we need to estimate what the dilution is for each target in the frame using NGTSDilution
-        cmd = '/usr/local/anaconda3/bin/python {:}/ngtsdilution.py {:} {:} --output_dir {:}--threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
+        cmd = '/usr/local/anaconda3/bin/python {:}/ngtsdilution.py {:} {:} --output_dir {:} --threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
                                                                         solved_autoguider_image_location,
                                                                         solved_autoguider_catalogue_location,
                                                                         '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']),
                                                                         args.threads,
                                                                         '{:}/NGTS_PRF/NG0029-3024_813_IMAGE81320191012010055_cat.npy'.format(PAOPhot_paths['NGTSDilution_path']))
         print(cmd)
-        os.system(cmd) 
+        #os.system(cmd) 
+
 
         # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
         # Lets check
@@ -147,21 +149,24 @@ if __name__=="__main__":
         else : print('refcatpipe2 ran OK')
     else : print('Products found.')
 
-    exit() 
 
     # Now check the photometry catalogue, using thr reference catalogue as a failsafe
     if args.photometry_catalogue == 'None': 
-        
         if args.target_ticid != -1:
             # Here we need to check if the photometry catalogue has been made
             # This is a unique catalogue with the format   NGXXXX+YY_TICXXXXXXXX.fits
             # stored in PAOPhot2/target_catalogues/NGXXXX+YY_TICXXXXXXXX.fits 
-            photometry_catalogue = 1
-            pass
+            # Now we need to check to see if the photometry catalogue exists
+            # If not, we need to make it 
+            photometry_catalogue = '{:}/target_catalogues/TIC-{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], args.target_ticid)
+            is not os.path.isfile(photometry_catalogue) : 
+                print('Not found {:}, making it.'.format(photometry_catalogue))
+                make_TIC_target_catalogue(args.target_ticid, solved_autoguider_image_location, solved_autoguider_catalogue_location).write(photometry_catalogue, overwrite=True)
+            else:
+                print('Found {:}'.format(photometry_catalogue))
         else : photometry_catalogue = solved_autoguider_catalogue_location
     else : photometry_catalogue = args.photometry_catalogue
 
-    photometry_catalogue = args.photometry_catalogue
 
     # Get the image information associated with this action
     # list of dictionaries, not disctionary of lists
