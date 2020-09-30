@@ -95,6 +95,8 @@ if __name__=="__main__":
         else : print('refcatpipe2 ran OK')
     else : print('Products found.')
 
+    exit() 
+    
     # Now check the photometry catalogue, using thr reference catalogue as a failsafe
     if args.photometry_catalogue == 'None': photometry_catalogue = solved_autoguider_catalogue_location
     else : photometry_catalogue = args.photometry_catalogue
