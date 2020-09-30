@@ -159,7 +159,7 @@ if __name__=="__main__":
             # Now we need to check to see if the photometry catalogue exists
             # If not, we need to make it 
             photometry_catalogue = '{:}/target_catalogues/TIC-{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], args.target_ticid)
-            is not os.path.isfile(photometry_catalogue) : 
+            if not os.path.isfile(photometry_catalogue) : 
                 print('Not found {:}, making it.'.format(photometry_catalogue))
                 make_TIC_target_catalogue(args.target_ticid, solved_autoguider_image_location, solved_autoguider_catalogue_location).write(photometry_catalogue, overwrite=True)
             else:
