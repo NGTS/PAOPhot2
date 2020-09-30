@@ -23,8 +23,13 @@ def arg_parse():
                 help='The catalogue file for which to extract photometry with. If None, we will use the reference catalogue associate with the reference image.',
                 default='None', type=str)
 
-
     p.add_argument('-c', 
+                '--target_ticid',
+                help='The TIC ID of the target for which to extract photometry for. ',
+                default='-1', type=int)        
+
+
+    p.add_argument('-d', 
                 '--threads',
                 help='The number of processing threads [default= 2]',
                 default=2, type=int)
@@ -101,6 +106,12 @@ if __name__=="__main__":
         print(cmd)
         os.system(cmd) 
 
+        # Check the catalogue has been made
+        if not os.path.isfile(solved_autoguider_catalogue_location) : 
+            print('Attempted to make the reference catalogue but failed.')
+            exit()
+
+
         # Now solve the autoguider reference image for a WCS solution 
         cmd = '/usr/local/anaconda3/bin/python {:}/solve_ref_images.py {:} {:} --indir {:} --outdir {:}'.format(PAOPhot_paths['refcatpipe2_path'], 
                                                                                         solved_autoguider_catalogue_location, 
@@ -110,6 +121,16 @@ if __name__=="__main__":
         print(cmd)
         os.system(cmd) 
 
+        # Finally, we need to estimate what the dilution is for each target in the frame using NGTSDilution
+        cmd = '/usr/local/anaconda3/bin/python {:} {:} {:} --output_dir {:}--threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
+                                                                        solved_autoguider_image_location,
+                                                                        solved_autoguider_catalogue_location,
+                                                                        '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']),
+                                                                        args.threads,
+                                                                        '{:}/NGTS_PRF/NG0029-3024_813_IMAGE81320191012010055_cat.npy'.format(PAOPhot_paths['NGTSDilution_path']))
+        print(cmd)
+        os.system(cmd) 
+        
         # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
         # Lets check
         print('\t\tValidating refcatpipe2 outputs... ')
@@ -126,11 +147,21 @@ if __name__=="__main__":
         else : print('refcatpipe2 ran OK')
     else : print('Products found.')
 
-    
+    exit() 
+
     # Now check the photometry catalogue, using thr reference catalogue as a failsafe
-    if args.photometry_catalogue == 'None': photometry_catalogue = solved_autoguider_catalogue_location
+    if args.photometry_catalogue == 'None': 
+        
+        if args.target_ticid != -1:
+            # Here we need to check if the photometry catalogue has been made
+            # This is a unique catalogue with the format   NGXXXX+YY_TICXXXXXXXX.fits
+            # stored in PAOPhot2/target_catalogues/NGXXXX+YY_TICXXXXXXXX.fits 
+            photometry_catalogue = 1
+            pass
+        else : photometry_catalogue = solved_autoguider_catalogue_location
     else : photometry_catalogue = args.photometry_catalogue
 
+    photometry_catalogue = args.photometry_catalogue
 
     # Get the image information associated with this action
     # list of dictionaries, not disctionary of lists
@@ -146,7 +177,7 @@ if __name__=="__main__":
     pool = Pool(args.threads)
     pool.map(photometry_worker, range(len(images_information))[:8])
     pool.close()
-    poo.join()
+    pool.join()
 
     exit()
     print('\tImage reduction complete. Counting number of photfiles. ')

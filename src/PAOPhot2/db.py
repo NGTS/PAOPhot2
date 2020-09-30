@@ -9,7 +9,8 @@ import pymysql
 
 PAOPhot_paths = {'PAOPhot2_data_path' : '/ngts/staging/archive/PAOPhot2',
               'refcatpipe2_path' : '/home/ops/dev/refcatpipe2',
-              'WCSPhotpipe_path'  : '/home/ops/dev/WCSPhotPipe'}
+              'WCSPhotpipe_path'  : '/home/ops/dev/WCSPhotPipe',
+              'NGTSDilution_path' : '/home/ops/dev/NGTSDilution'}
 
 # pylint: disable=invalid-name
 
