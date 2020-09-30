@@ -42,7 +42,7 @@ def photometry_worker(i):
                                                                                     images_information[i]['image_id'])
     if not os.path.isfile(image_path) :
         print('Unable to find {:}'.format(image_path))
-        continue
+
     else:
         # Create the WCSPhot command
         cmd = '/usr/local/anaconda3/bin/python {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['WCSPhotpipe_path'],
