@@ -111,6 +111,13 @@ def get_images_information_for_action(action_id):
         result = cur.fetchall()
     return result
 
+def get_image_information(image_id):
+    qry = 'select * from raw_image_list where image_id={:};'.format(image_id)
+    with open_db(cur_class='dict') as cur:
+        cur.execute(qry)
+        result = cur.fetchall()
+    return result
+
 
 def get_autoguider_information(field, camera_id):
     qry = 'select * from autoguider_refimage WHERE field="{:}" AND camera_id={:};'.format(field, camera_id)
