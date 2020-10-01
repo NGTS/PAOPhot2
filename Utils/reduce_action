@@ -240,4 +240,5 @@ if __name__=="__main__":
         data = np.concatenate((np.array(row), data))
         total_table.add_row(data)
 
+    print(total_table)
     total_table.write('{:}/TIC-{:}_photometry.csv'.format(output_directory, args.target_ticid), overwrite=True)
