@@ -224,7 +224,7 @@ if __name__=="__main__":
     total_table = Table(names=table_header, dtype=table_dtype) 
 
 
-    for i in range(len(images_information))[:3]:
+    for i in range(len(images_information))[:]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print('Processing {:}'.format(phot_file.split('/')[-1]))
         phot_table = Table.read(phot_file)
@@ -239,3 +239,5 @@ if __name__=="__main__":
         data = data.flatten() 
         data = np.concatenate((np.array(row), data))
         total_table.add_row(data)
+
+    total_table.write('{:}/TIC-{:}_photometry.fits'.format(output_directory, args.target_ticid))
