@@ -33,15 +33,15 @@ def plot_target_night(table, tic_id_target, bin = None):
     tics = np.delete(tics, np.where(tics==tic_id_target))
 
     # First, get the target flux 
-    target_flux = np.array(t['{:}_Aper_flux_3'.format(tic_id_target)])
-    target_flux_err = np.array(t['{:}_Aper_flux_3_err'.format(tic_id_target)])
+    target_flux = np.array(table['{:}_Aper_flux_3'.format(tic_id_target)])
+    target_flux_err = np.array(table['{:}_Aper_flux_3_err'.format(tic_id_target)])
 
     # Now get the comp flux and errors
     comp_flux = np.zeros(target_flux.shape[0])
     comp_flux_err = np.zeros(target_flux.shape[0])
     for i in range(tics.shape[0])[:] : 
-        comp_flux = comp_flux + np.array(t['{:}_Aper_flux_3'.format(tics[i])])
-        comp_flux_err = comp_flux_err + np.array(t['{:}_Aper_flux_3_err'.format(tics[i])])**2
+        comp_flux = comp_flux + np.array(table['{:}_Aper_flux_3'.format(tics[i])])
+        comp_flux_err = comp_flux_err + np.array(table['{:}_Aper_flux_3_err'.format(tics[i])])**2
     comp_flux_err = np.sqrt(comp_flux_err)
 
     # Work out the detrended flux and errors
@@ -58,16 +58,16 @@ def plot_target_night(table, tic_id_target, bin = None):
     rms = int(1e6*np.std(detrended_flux))
 
     f = plt.figure(figsize = (12,5))
-    plt.errorbar(np.array(t['JD'])-time_offset, detrended_flux, yerr=detrended_flux_err/norm_constant, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.3)
+    plt.errorbar(np.array(table['JD'])-time_offset, detrended_flux, yerr=detrended_flux_err/norm_constant, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.3)
 
 
 
     # Now plot bin if needed 
-    t_bin, f_bin, f_bin_err = lc_bin(np.array(t['JD']), detrended_flux, 0.5/24/6)
+    t_bin, f_bin, f_bin_err = lc_bin(np.array(table['JD']), detrended_flux, 0.5/24/6)
     plt.errorbar(t_bin-time_offset, f_bin, yerr=f_bin_err, markersize=3, fmt='k.', ecolor='k', alpha = 1)
     rms_5 = int(1e6*np.std(f_bin))
 
-    tile_text = '{:} [{:}]\nRMS = {:,} ppm [{:,} @ 5 min]'.format(tic_id_target,    Time(np.array(t['JD'])[0], format='jd').datetime.isoformat()[:10], rms, rms_5)
+    tile_text = '{:} [{:}]\nRMS = {:,} ppm [{:,} @ 5 min]'.format(tic_id_target,    Time(np.array(table['JD'])[0], format='jd').datetime.isoformat()[:10], rms, rms_5)
     plt.gca().set(xlabel='JD-{:,}'.format(time_offset), ylabel='Flux',title=tile_text)
     plt.grid()
     plt.tight_layout()
