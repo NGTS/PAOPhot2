@@ -209,7 +209,8 @@ if __name__=="__main__":
     print('\tSummary')
     print('\t\t{:,} frames reduced out of {:,} frames [{:.2f} %]'.format(np.sum(reduced_mask), len(images_information), 100*np.sum(reduced_mask)/len(images_information) ))
 
-    
+    images_information = np.array(images_information)[reduced_mask]
+    print(len(images_information))
 
 
     # Now lets get the time axis
