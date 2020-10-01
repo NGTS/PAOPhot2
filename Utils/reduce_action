@@ -1,6 +1,8 @@
 #!/home/sam/anaconda3/bin/python
 
 # Imports
+import matplotlib
+matplotlib.use('Agg')
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
 from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
@@ -10,6 +12,7 @@ from astropy.io import fits
 from multiprocessing import Pool 
 from astropy.table import Table 
 import numpy as np 
+
 
 # PAOphot path
 
@@ -224,7 +227,7 @@ if __name__=="__main__":
     total_table = Table(names=table_header, dtype=table_dtype) 
 
 
-    for i in range(len(images_information))[:]:
+    for i in range(len(images_information))[:100]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print('Collecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
         phot_table = Table.read(phot_file)
