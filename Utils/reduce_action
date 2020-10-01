@@ -5,7 +5,7 @@ import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
 from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
 from PAOPhot2.time_conversion import convert_MJD
-
+from PAOPhot2.plot_functions import plot_target_night
 from astropy.io import fits 
 from multiprocessing import Pool 
 from astropy.table import Table 
@@ -183,10 +183,10 @@ if __name__=="__main__":
 
     # loop over the images, running WCSPhot for each 
     #for i in range(len(images_information))[:5]:
-    pool = Pool(args.threads)
-    pool.map(photometry_worker, range(len(images_information))[:])
-    pool.close()
-    pool.join()
+    #pool = Pool(args.threads)
+    #pool.map(photometry_worker, range(len(images_information))[:])
+    #pool.close()
+    #pool.join()
 
 
 
@@ -242,3 +242,10 @@ if __name__=="__main__":
 
     print(total_table)
     total_table.write('{:}/TIC-{:}_photometry.csv'.format(output_directory, args.target_ticid), overwrite=True, format='csv')
+
+
+    # Now plot the night 
+    print('Now plottting night...')
+    f, ax = plot_target_night(total_table , 'TIC-{:}'.format(args.target_ticid) )
+    f.savefig('{:}/TIC-{:}.png'.format(output_directory, args.target_ticid))
+    plt.close(f) 
