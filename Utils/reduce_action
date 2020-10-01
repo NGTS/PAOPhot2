@@ -190,10 +190,6 @@ if __name__=="__main__":
 
 
     print('\tImage reduction complete. Counting number of photfiles. ')
-    number_of_reduced = 0.
-    target_table = Table.read(photometry_catalogue)   #tic_id contains the names 
-    total_table = None
-
     reduced_mask = np.zeros(len(images_information), dtype=np.bool)
     for i in range(len(images_information)):
         image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
@@ -208,9 +204,23 @@ if __name__=="__main__":
 
     print('\tSummary')
     print('\t\t{:,} frames reduced out of {:,} frames [{:.2f} %]'.format(np.sum(reduced_mask), len(images_information), 100*np.sum(reduced_mask)/len(images_information) ))
-
+    
+    # Trime the image info to only the used ones
     images_information = np.array(images_information)[reduced_mask]
-    print(len(images_information))
+
+
+    print('Now concating the table')
+    target_table = Table.read(photometry_catalogue)   #tic_id contains the names 
+    table_header = ['JD', 'BJD', 'HJD']
+    photometry_header = Table.read('{:}/IMAGE{:}.phot'.format(output_directory, images_information[0]['image_id'])).colnames[1:]
+    for i in range(len(target_table)):
+        for j in range(len(photometry_header)) : table_header.append('{:}_{:}'.format(str(target_table['tic_id'][i]), photometry_header[j]))
+    table_dtype = np.tile(float,len(table_header)+3)
+    
+    
+    total_table = Table(names=table_header, dtype=table_dtype) 
+
+    print(total_table)
 
 
     # Now lets get the time axis
