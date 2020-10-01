@@ -1,7 +1,7 @@
 
 from astropy.coordinates import EarthLocation
 import astropy.units as u
-from astropy.time import TimeDelta
+from astropy.time import TimeDelta, Time
 
 
 olat = -24.615662
