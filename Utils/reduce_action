@@ -6,6 +6,7 @@ from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_
 from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
 from astropy.io import fits 
 from multiprocessing import Pool 
+from astropy.table import Table 
 
 # PAOphot path
 
