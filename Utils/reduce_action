@@ -250,7 +250,7 @@ if __name__=="__main__":
     f, ax, date = plot_target_night(total_table , 'TIC-{:}'.format(args.target_ticid) )
 
     print('Writing table')
-    total_table.write('{:}/TIC-{:}_{:}_photometry.csv'.format(output_directory, args.target_ticid, date), overwrite=True, format='csv')
+    total_table.write('{:}/TIC-{:}_{:}_{:}_{:}_photometry.csv'.format(output_directory, args.target_ticid, action_info['field'], action_info['camera_id'], date), overwrite=True, format='csv')
 
-    f.savefig('{:}/TIC-{:}_{:}.png'.format(output_directory, args.target_ticid, date))
+    f.savefig('{:}/TIC-{:}_{:}_{:}_{:}.png'.format(output_directory, args.target_ticid, action_info['field'], action_info['camera_id'], date))
     plt.close(f) 
