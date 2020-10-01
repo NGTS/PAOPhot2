@@ -13,6 +13,6 @@ NGTS_location = EarthLocation(lat=olat*u.deg,
 
 def convert_MJD(MJD, hjd_corr_sec, bjd_corr_sec):
         time_jd = Time(MJD, format="mjd", scale='utc', location=NGTS_location)
-        time_bary = time_jd.tdb + TimeDelta(bjd_corr_sec*u.sec)
-        time_helio = time_jd.utc + TimeDelta(hjd_corr_sec*u.sec) 
+        time_bary = time_jd.tdb + TimeDelta(bjd_corr_sec*u.second)
+        time_helio = time_jd.utc + TimeDelta(hjd_corr_sec*u.second) 
         return time_jd, time_bary, time_helio
