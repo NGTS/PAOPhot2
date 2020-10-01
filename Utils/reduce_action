@@ -251,6 +251,6 @@ if __name__=="__main__":
 
     # Now plot the night 
     print('Now plottting night...')
-    f, ax = plot_target_night(total_table , 'TIC-{:}'.format(args.target_ticid) )
-    f.savefig('{:}/TIC-{:}.png'.format(output_directory, args.target_ticid))
+    f, ax, date = plot_target_night(total_table , 'TIC-{:}'.format(args.target_ticid) )
+    f.savefig('{:}/TIC-{:}_{:}.png'.format(output_directory, args.target_ticid, date))
     plt.close(f) 

@@ -71,4 +71,4 @@ def plot_target_night(table, tic_id_target, bin = None):
     plt.gca().set(xlabel='JD-{:,}'.format(time_offset), ylabel='Flux',title=tile_text)
     plt.grid()
     plt.tight_layout()
-    return f, plt.gca()
+    return f, plt.gca() , Time(np.array(table['JD'])[0], format='jd').datetime.isoformat()[:10]
