@@ -229,7 +229,7 @@ if __name__=="__main__":
     total_table = Table(names=table_header, dtype=table_dtype) 
 
 
-    for i in range(len(images_information))[:100]:
+    for i in range(len(images_information))[:]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print('Collecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
         phot_table = Table.read(phot_file)
@@ -245,12 +245,12 @@ if __name__=="__main__":
         data = np.concatenate((np.array(row), data))
         total_table.add_row(data)
 
-    print(total_table)
-    total_table.write('{:}/TIC-{:}_photometry.csv'.format(output_directory, args.target_ticid), overwrite=True, format='csv')
-
-
     # Now plot the night 
     print('Now plottting night...')
     f, ax, date = plot_target_night(total_table , 'TIC-{:}'.format(args.target_ticid) )
+
+    print('Writing table')
+    total_table.write('{:}/TIC-{:}_{:}_photometry.csv'.format(output_directory, args.target_ticid, date), overwrite=True, format='csv')
+
     f.savefig('{:}/TIC-{:}_{:}.png'.format(output_directory, args.target_ticid, date))
     plt.close(f) 
