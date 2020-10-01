@@ -3,6 +3,8 @@
 # Imports
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
 from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
