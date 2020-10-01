@@ -186,12 +186,12 @@ if __name__=="__main__":
 
     print('\tImage reduction complete. Counting number of photfiles. ')
     number_of_reduced = 0.
-    for i in range(len(images_information['image_id'])):
+    for i in range(len(images_information)):
         image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
                                                                                         args.action, 
-                                                                                        images_information['image_id'][i])
+                                                                                        images_information[i]['image_id'])
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory,
-                                                images_information['image_id'][i])
+                                                images_information[i]['image_id'])
         if os.path.isfile(phot_file) : number_of_reduced += 1
         else : print('\t\t{:} failed to reduce'.format(image_path))
 
