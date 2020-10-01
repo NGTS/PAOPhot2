@@ -229,7 +229,7 @@ if __name__=="__main__":
     total_table = Table(names=table_header, dtype=table_dtype) 
 
 
-    for i in range(len(images_information))[:]:
+    for i in range(len(images_information))[:100]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print('Collecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
         phot_table = Table.read(phot_file)
