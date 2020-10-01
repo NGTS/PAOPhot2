@@ -220,7 +220,7 @@ if __name__=="__main__":
     photometry_header = Table.read('{:}/IMAGE{:}.phot'.format(output_directory, images_information[0]['image_id'])).colnames[1:]
     for i in range(len(target_table)):
         for j in range(len(photometry_header)) : table_header.append('TIC-{:}_{:}'.format(str(target_table['tic_id'][i]), photometry_header[j]))
-    table_dtype = np.tile(np.float64,len(table_header))
+    table_dtype = np.tile(float,len(table_header))
     total_table = Table(names=table_header, dtype=table_dtype) 
 
 
