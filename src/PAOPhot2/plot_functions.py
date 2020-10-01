@@ -54,7 +54,7 @@ def plot_target_night(table, tic_id_target, bin = None):
     detrended_flux = detrended_flux / norm_constant
 
     # establish time offset and other metrics
-    time_offset = int(np.min(time))
+    time_offset = int(np.min(np.array(table['JD'])))
     rms = int(1e6*np.std(detrended_flux))
 
     f = plt.figure(figsize = (12,5))
