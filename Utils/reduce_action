@@ -224,9 +224,9 @@ if __name__=="__main__":
     total_table = Table(names=table_header, dtype=table_dtype) 
 
 
-    for i in range(len(images_information))[:]:
+    for i in range(len(images_information))[:5]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
-        print('Processing {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
+        print('Collecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
         phot_table = Table.read(phot_file)
         phot_table.remove_column('Sequence_number') # we dont need or account for this 
 
@@ -235,9 +235,10 @@ if __name__=="__main__":
         row = [JD.jd,  BJD.jd,  HJD.jd]
 
         data = np.zeros((len(phot_table), len(phot_table.colnames)), dtype = np.float64)
-        for i in range(len(phot_table.colnames)) : data[:,i] = np.array(phot_table[phot_table.colnames[i]], dtype = np.float64) 
+        for j in range(len(phot_table.colnames)) : data[:,j] = np.array(phot_table[phot_table.colnames[j]], dtype = np.float64) 
         data = data.flatten() 
         data = np.concatenate((np.array(row), data))
         total_table.add_row(data)
 
+    print(total_table)
     total_table.write('{:}/TIC-{:}_photometry.csv'.format(output_directory, args.target_ticid), overwrite=True, format='csv')
