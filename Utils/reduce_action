@@ -225,7 +225,7 @@ if __name__=="__main__":
 
 
     for i in range(len(images_information))[:3]:
-        phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])    print(total_table)
+        phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print('Processing {:}'.format(phot_file.split('/')[-1]))
         phot_table = Table.read(phot_file)
 
