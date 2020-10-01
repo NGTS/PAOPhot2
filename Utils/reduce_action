@@ -226,7 +226,7 @@ if __name__=="__main__":
 
     for i in range(len(images_information))[:5]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
-        print('Processing {:}'.format(phot_file.split('/')[-1]))
+        print('Processing {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i, len(images_information)))
         phot_table = Table.read(phot_file)
         phot_table.remove_column('Sequence_number') # we dont need or account for this 
 
