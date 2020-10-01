@@ -179,12 +179,11 @@ if __name__=="__main__":
 
     # loop over the images, running WCSPhot for each 
     #for i in range(len(images_information))[:5]:
-    pool = Pool(args.threads)
-    pool.map(photometry_worker, range(len(images_information))[:])
-    pool.close()
-    pool.join()
+    #pool = Pool(args.threads)
+    #pool.map(photometry_worker, range(len(images_information))[:])
+    #pool.close()
+    #pool.join()
 
-    exit()
     print('\tImage reduction complete. Counting number of photfiles. ')
     number_of_reduced = 0.
     for i in range(len(images_information['image_id'])):
