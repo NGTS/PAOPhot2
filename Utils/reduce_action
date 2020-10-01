@@ -4,6 +4,8 @@
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
 from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
+from PAOPhot2.time_conversion import convert_MJD
+
 from astropy.io import fits 
 from multiprocessing import Pool 
 from astropy.table import Table 
@@ -211,15 +213,23 @@ if __name__=="__main__":
 
     print('Now concating the table')
     target_table = Table.read(photometry_catalogue)   #tic_id contains the names 
+
+    # First, make the total table to hold all the photometry.
+    # We need to make sure headers are correct here, and contain a column for each target
     table_header = ['JD', 'BJD', 'HJD']
     photometry_header = Table.read('{:}/IMAGE{:}.phot'.format(output_directory, images_information[0]['image_id'])).colnames[1:]
     for i in range(len(target_table)):
-        for j in range(len(photometry_header)) : table_header.append('{:}_{:}'.format(str(target_table['tic_id'][i]), photometry_header[j]))
+        for j in range(len(photometry_header)) : table_header.append('TIC-{:}_{:}'.format(str(target_table['tic_id'][i]), photometry_header[j]))
     table_dtype = np.tile(float,len(table_header))
-    
     total_table = Table(names=table_header, dtype=table_dtype) 
 
-    print(total_table)
 
+    for i in range(len(images_information))[:3]:
+        phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])    print(total_table)
+        print('Processing {:}'.format(phot_file.split('/')[-1]))
+        phot_table = Table.read(phot_file)
 
-    # Now lets get the time axis
+        # First, get the time
+        JD, BJD, HJD = convert_MJD(images_information[i]['mjd'], phot_table['hjd_corr_sec'][0], phot_table['bjd_corr_sec'][0]) # do this only for target
+        print(JD.jd,  BJD.jd,  HJD.jd)
+
