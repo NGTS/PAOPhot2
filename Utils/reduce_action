@@ -118,7 +118,7 @@ if __name__=="__main__":
                                                                                    autoguider_obstart , 
                                                                                    solved_autoguider_catalogue_location )
         print(cmd)
-        #os.system(cmd) 
+        os.system(cmd) 
 
         # Check the catalogue has been made
         if not os.path.isfile(solved_autoguider_catalogue_location) : 
@@ -133,7 +133,7 @@ if __name__=="__main__":
                                                                                         '/ngts/autoguider_ref',  
                                                                                         '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']))
         print(cmd)
-        #os.system(cmd) 
+        os.system(cmd) 
 
         # Finally, we need to estimate what the dilution is for each target in the frame using NGTSDilution
         cmd = '/usr/local/anaconda3/bin/python {:}/ngtsdilution.py {:} {:} --output_dir {:} --threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
@@ -143,7 +143,7 @@ if __name__=="__main__":
                                                                         args.threads,
                                                                         '{:}/NGTS_PRF/NG0029-3024_813_IMAGE81320191012010055_cat.npy'.format(PAOPhot_paths['NGTSDilution_path']))
         print(cmd)
-        #os.system(cmd) 
+        os.system(cmd) 
 
 
         # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
@@ -192,17 +192,17 @@ if __name__=="__main__":
 
     # loop over the images, running WCSPhot for each 
     #for i in range(len(images_information))[:5]:
-    #pool = Pool(args.threads)
-    #pool.map(photometry_worker, range(len(images_information))[:])
-    #pool.close()
-    #pool.join()
+    pool = Pool(args.threads)
+    pool.map(photometry_worker, range(len(images_information))[:100])
+    pool.close()
+    pool.join()
 
 
 
 
     print('\tImage reduction complete. Counting number of photfiles. ')
     reduced_mask = np.zeros(len(images_information), dtype=np.bool)
-    for i in range(len(images_information)):
+    for i in range(len(images_information))[:100]:
         image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
                                                                                         args.action, 
                                                                                         images_information[i]['image_id'])
