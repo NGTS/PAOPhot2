@@ -27,7 +27,7 @@ def lc_bin(time, flux, bin_width):
         return time_bin, flux_bin, err_bin
 
 
-def plot_target_night(table, tic_id_target, bin = None):
+def plot_target_night(table, tic_id_target,fieldcam):
     # tic_id_target is TIC-XXX 
     tics = np.unique([i.split('_')[0] for i in table.colnames[3:] ])
     tics = np.delete(tics, np.where(tics==tic_id_target))
@@ -67,8 +67,11 @@ def plot_target_night(table, tic_id_target, bin = None):
     plt.errorbar(t_bin-time_offset, f_bin, yerr=f_bin_err, markersize=3, fmt='k.', ecolor='k', alpha = 1)
     rms_5 = int(1e6*np.std(f_bin))
 
-    tile_text = '{:} [{:}]\nRMS = {:,} ppm [{:,} @ 5 min]'.format(tic_id_target,    Time(np.array(table['JD'])[0], format='jd').datetime.isoformat()[:10], rms, rms_5)
+    tile_text = '{:} [{:}]\n{:}\nRMS = {:,} ppm [{:,} @ 5 min]'.format(tic_id_target,    Time(np.array(table['JD'])[0], format='jd').datetime.isoformat()[:10],fieldcam, rms, rms_5)
     plt.gca().set(xlabel='JD-{:,}'.format(time_offset), ylabel='Flux',title=tile_text)
     plt.grid()
     plt.tight_layout()
-    return f, plt.gca() , Time(np.array(table['JD'])[0], format='jd').datetime.isoformat()[:10]
+
+    # Finally, creat lightcurve structure to return 
+    tmp = np.array([np.array(table['JD']), target_flux/comp_flux, target_flux_err /comp_flux ]).T
+    return f, plt.gca() , Time(np.array(table['JD'])[0], format='jd').datetime.isoformat()[:10], tmp
