@@ -51,6 +51,7 @@ def arg_parse():
 
 
 def photometry_worker(i):
+    print('Processing image {:,} out of {:,}'.format(i, len(images_information)) )
     #image_path = '/ngts/das01/action254027_observeField/IMAGE81120200928093346.fits.bz2'
     image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
                                                                                     args.action, 
@@ -206,6 +207,14 @@ if __name__=="__main__":
         image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
                                                                                         args.action, 
                                                                                         images_information[i]['image_id'])
+
+        if not os.path.isfile(image_path) :
+            print('Unable to find {:} on {:}, trying staging'.format(image_path, action_info['das_id']))
+            image_path = '/ngts/staging/action{:}_observeField/IMAGE{:}.fits.bz2'.format(args.action,  images_information[i]['image_id']) # action has been copied to staging
+            if not os.path.isfile(image_path) : 
+                print('Unable to find {:} on staging, aborting :('.format(image_path))
+                return
+                
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory,
                                                 images_information[i]['image_id'])
 
