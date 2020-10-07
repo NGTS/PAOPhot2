@@ -80,6 +80,10 @@ def is_action_ready_to_reduce(action_id):
             ready = False
     return ready
 
+
+
+
+
 def get_action_info(action_id):
     """
     Get action info for scheduling reductions
@@ -100,8 +104,16 @@ def get_action_info(action_id):
     with open_db(cur_class='dict') as cur:
         cur.execute(qry, qry_args)
         result = cur.fetchone()
-    return result
+    return result 
 
+
+
+def get_actions_for_night(night):
+    qry = 'select actual_start_utc,action_id,action_type from action_summary_log where actual_start_utc like "{:}%" AND action_type="observeField";'.format(night)
+    with open_db(cur_class='dict') as cur:
+        cur.execute(qry)
+        result = cur.fetchall()
+    return result
 
 
 def get_images_information_for_action(action_id):
