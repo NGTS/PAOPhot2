@@ -44,6 +44,11 @@ def arg_parse():
                 help='The number of processing threads [default= 2]',
                 default=2, type=int)
                    
+    p.add_argument('-e', 
+                '--astr_net_tmp',
+                help='The astrometry.net temp directory.',
+                default='/tmp', type=str)   
+
         
     return p.parse_args()
 
@@ -132,7 +137,8 @@ if __name__=="__main__":
                                                                                         solved_autoguider_catalogue_location, 
                                                                                         autoguider_image_information['filename'], 
                                                                                         '/ngts/autoguider_ref',  
-                                                                                        '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']))
+                                                                                        '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']),
+                                                                                        '--astr_net_tmp {:}'.format(args.astr_net_tmp))
         print(cmd)
         os.system(cmd) 
 
