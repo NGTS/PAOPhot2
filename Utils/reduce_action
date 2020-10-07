@@ -198,11 +198,11 @@ if __name__=="__main__":
     os.system('mkdir -p {:}'.format(output_directory))
 
     # loop over the images, running WCSPhot for each 
-    #for i in range(len(images_information))[:5]:
-    pool = Pool(args.threads)
-    pool.map(photometry_worker, range(len(images_information))[:])
-    pool.close()
-    pool.join()
+    for i in range(len(images_information)) : photometry_worker(i)
+    #pool = Pool(args.threads)
+    #pool.map(photometry_worker, range(len(images_information))[:])
+    #pool.close()
+    #pool.join()
 
 
 
@@ -219,7 +219,7 @@ if __name__=="__main__":
             image_path = '/ngts/staging/action{:}_observeField/IMAGE{:}.fits.bz2'.format(args.action,  images_information[i]['image_id']) # action has been copied to staging
             if not os.path.isfile(image_path) : 
                 print('Unable to find {:} on staging, aborting :('.format(image_path))
-                return
+                continue
                 
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory,
                                                 images_information[i]['image_id'])
