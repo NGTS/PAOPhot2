@@ -209,7 +209,7 @@ if __name__=="__main__":
 
     print('\tImage reduction complete. Counting number of photfiles. ')
     reduced_mask = np.zeros(len(images_information), dtype=np.bool)
-    for i in range(len(images_information))[:50]:
+    for i in range(len(images_information))[:]:
         image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
                                                                                         args.action, 
                                                                                         images_information[i]['image_id'])
@@ -247,7 +247,7 @@ if __name__=="__main__":
     total_table = Table(names=table_header, dtype=table_dtype) 
 
 
-    for i in range(len(images_information))[:50]:
+    for i in range(len(images_information))[:]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print('Collecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
         phot_table = Table.read(phot_file)
