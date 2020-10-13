@@ -29,7 +29,7 @@ def lc_bin(time, flux, bin_width):
 
 def plot_target_night(table, tic_id_target,fieldcam):
     # tic_id_target is TIC-XXX 
-    tics = np.unique([i.split('_')[0] for i in table.colnames[3:] ])
+    tics = np.unique([i.split('_')[0] for i in table.colnames[6:] ])
     tics = np.delete(tics, np.where(tics==tic_id_target))
 
     # First, get the target flux 
