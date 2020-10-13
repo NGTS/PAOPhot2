@@ -107,6 +107,12 @@ def get_action_info(action_id):
     return result 
 
 
+def get_actions_for_field(field):
+    qry = 'select * from action_summary_log where actual_start_utc like "{:}%" AND action_type="observeField";'.format(night)
+    with open_db(cur_class='dict') as cur:
+        cur.execute(qry)
+        result = cur.fetchall()
+    return result
 
 def get_actions_for_night(night):
     qry = 'select * from action_summary_log where actual_start_utc like "{:}%" AND action_type="observeField";'.format(night)

@@ -240,7 +240,7 @@ if __name__=="__main__":
 
     # First, make the total table to hold all the photometry.
     # We need to make sure headers are correct here, and contain a column for each target
-    table_header = ['JD', 'BJD', 'HJD']
+    table_header = ['JD', 'BJD', 'HJD','AIRMASS', 'CCD_TEMP','FOCUS_TEMP']
     photometry_header = Table.read('{:}/IMAGE{:}.phot'.format(output_directory, images_information[0]['image_id'])).colnames[1:]
     for i in range(len(target_table)):
         for j in range(len(photometry_header)) : table_header.append('TIC-{:}_{:}'.format(str(target_table['tic_id'][i]), photometry_header[j]))
@@ -256,7 +256,7 @@ if __name__=="__main__":
 
         # First, get the time
         JD, BJD, HJD = convert_MJD(images_information[i]['mjd'], phot_table['hjd_corr_sec'][0], phot_table['bjd_corr_sec'][0]) # do this only for target
-        row = [JD.jd,  BJD.jd,  HJD.jd]
+        row = [JD.jd,  BJD.jd,  HJD.jd, images_information[i]['airmass'], images_information[i]['ccd_temp'], images_information[i]['focus_temp']]
 
         data = np.zeros((len(phot_table), len(phot_table.colnames)), dtype = np.float64)
         for j in range(len(phot_table.colnames)) : data[:,j] = np.array(phot_table[phot_table.colnames[j]], dtype = np.float64) 
