@@ -159,5 +159,5 @@ if __name__=="__main__":
     np.savetxt('{:}/{:}_{:}_{:}_MAG_NORMED.dat'.format(args.output_dir, tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
 
     #return f, plt.gca() , Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10], tmp
-    plt.savefig('{:}/{:}.png'.format(args.output_dir, args.photometry_file[:-4]))
+    plt.savefig('{:}/{:}.png'.format(args.output_dir, args.photometry_file.split('/')[-1][:-4]))
     plt.close()
