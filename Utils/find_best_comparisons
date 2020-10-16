@@ -71,7 +71,7 @@ if __name__=="__main__":
     ax.set_xticklabels(tic_ids, rotation = 60, fontsize=4, ha="right")
     plt.legend()
     f.tight_layout()
-    f.savefig('{:}/{:}_{:}_Comparison_star_rejection.png'.format(args.output_dir, flux_column_target.split('_')[0], args.split('/')[-1][:-5]), dpi=250)
+    f.savefig('{:}/{:}_Comparison_star_rejection.png'.format(args.output_dir, flux_column_target.split('_')[0]), dpi=250)
     plt.close()
 
     # now write it out for photmerge
