@@ -200,7 +200,7 @@ if __name__=="__main__":
     os.system('mkdir -p {:}'.format(output_directory))
 
     # loop over the images, running WCSPhot for each 
-    for i in range(len(images_information))[:50] : photometry_worker(i)
+    for i in range(len(images_information))[:] : photometry_worker(i)
     #pool = Pool(4)
     #pool.map(photometry_worker, range(len(images_information))[:])
     #pool.close()
@@ -208,7 +208,7 @@ if __name__=="__main__":
 
     print('\tImage reduction complete. Counting number of photfiles. ')
     reduced_mask = np.zeros(len(images_information), dtype=np.bool)
-    for i in range(len(images_information))[:50]:
+    for i in range(len(images_information))[:]:
         image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
                                                                                         args.action, 
                                                                                         images_information[i]['image_id'])
