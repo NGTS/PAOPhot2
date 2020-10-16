@@ -201,10 +201,10 @@ if __name__=="__main__":
 
     # loop over the images, running WCSPhot for each 
     #for i in range(len(images_information))[:] : photometry_worker(i)
-    pool = Pool(2)
-    pool.map(photometry_worker, range(len(images_information))[:])
-    pool.close()
-    pool.join()
+    #pool = Pool(2)
+    #pool.map(photometry_worker, range(len(images_information))[:])
+    #pool.close()
+    #pool.join()
 
     print('\tImage reduction complete. Counting number of photfiles. ')
     reduced_mask = np.zeros(len(images_information), dtype=np.bool)

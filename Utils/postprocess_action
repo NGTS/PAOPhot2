@@ -88,7 +88,7 @@ if __name__=="__main__":
     #tics = np.delete(tics, np.where(tics==tic_id_target)) # get rid of the target
     #tics = tics[1:]
     print('\tTarget = {:}'.format(tic_id_target))
-    tics = np.delete(tics, np.where(photometery_catalogue_mask==False)) # get rid of the target
+    flux_columns = np.delete(flux_columns, np.where(photometery_catalogue_mask==False)) # get rid of the target
 
     # First, get the target flux 
     target_flux = np.array(photometry_file[flux_column_target])
@@ -97,7 +97,7 @@ if __name__=="__main__":
     # Now get the comp flux and errors
     comp_flux = np.zeros(target_flux.shape[0])
     comp_flux_err = np.zeros(target_flux.shape[0])
-    for i in range(tics.shape[0])[:] : 
+    for i in range(flux_columns.shape[0])[:] : 
         comp_flux = comp_flux + np.array(photometry_file[flux_columns[i]])
         comp_flux_err = comp_flux_err + np.array(photometry_file[flux_columns[i] + '_err'])**2
     comp_flux_err = np.sqrt(comp_flux_err)
