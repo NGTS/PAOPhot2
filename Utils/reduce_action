@@ -276,14 +276,14 @@ if __name__=="__main__":
         print('\t\t{:}'.format(photometry_catalogue_mask))
     else:
         print('\t\tMask not found, aming it')
-        cmd = '/usr/local/anaconda3/bin/find_best_comparisons {:} {:} --output_dir {:} --fieldcam {:}'.format(photometry_catalogue , total_table_name, '/ngts/staging/archive/PAOPhot2/target_catalogues', '{:}_{:}'.format( action_info['field'], action_info['camera_id']))
+        cmd = '/usr/local/anaconda3/bin/find_best_comparisons {:} {:} --output_dir {:}'.format(photometry_catalogue , total_table_name, '/ngts/staging/archive/PAOPhot2/target_catalogues')
         print('\t\t{:}'.format(cmd))
         os.system(cmd)
 
 
     # Now post-process action to plot etc. 
     print('\t\tNow making plots')
-    cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --output_dir {:} '.format(photometry_catalogue , total_table_name ,  photometry_catalogue_mask , output_directory)
+    cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --output_dir {:}  --fieldcam {:}'.format(photometry_catalogue , total_table_name ,  photometry_catalogue_mask , output_directory , , '{:}_{:}'.format( action_info['field'], action_info['camera_id']))
     print('\t\t' + cmd)
     os.system(cmd)
     print('Finished.')
