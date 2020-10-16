@@ -112,6 +112,7 @@ if __name__=="__main__":
     # Finally, create the 
     tmp = np.array([np.array(photometry_file['JD']), detrended_flux, detrended_flux_err,]).T
     np.savetxt('{:}/{:}_{:}_{:}_FLUX.dat'.format(args.output_dir, tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
+    np.savetxt('{:}/{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
 
     # Now bin the data
     t_bin, f_bin, f_bin_err = lc_bin(np.array(photometry_file['JD']), detrended_flux, 0.5/24/6)
