@@ -1,10 +1,15 @@
 from astropy.table import Table, vstack
 from astropy.io import fits 
 import numpy as np 
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+import argparse, os, sys
+
+
 
 
 def make_TIC_target_catalogue(tic_id, reference_image, reference_catalogue):
-    print('making target catalogue for {:} using reference image {:} and reference catalogue {:}'.format(tic_id, tic_id, reference_image, reference_catalogue))
+    print('Making target catalogue for {:} using reference image {:} and reference catalogue {:}'.format(tic_id, tic_id, reference_image, reference_catalogue))
     frame = fits.open(reference_image)[0]
     reference_catalogue = Table.read(reference_catalogue)
 
@@ -19,13 +24,15 @@ def make_TIC_target_catalogue(tic_id, reference_image, reference_catalogue):
     # Sort catalogue out
     ###############################################################
     reference_catalogue_mask = (reference_catalogue['on_chip']==1) & (reference_catalogue['blended']==False) & (reference_catalogue['objType']=='STAR') & (reference_catalogue['lumclass']=='DWARF') & (reference_catalogue['Dilution_Tmag_AP3.0']< 0.1) 
+    reference_catalogue = reference_catalogue[reference_catalogue_mask] # get rid of naff
 
     i = 1
     while True:
-        if len(reference_catalogue_mask[reference_catalogue_mask & (np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.5))]) < 100:
+        mask = 
+        if len(reference_catalogue_mask[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.5))]) < 100:
             i *=2
         else : 
-            reference_catalogue = reference_catalogue[reference_catalogue_mask & (np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.5))]
+            reference_catalogue = reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.5))]
             print('Found {:,} comparison stars within Delta Tmag = {:.2f}'.format(len(reference_catalogue), i*0.5))
             break
 
@@ -41,6 +48,8 @@ def make_TIC_target_catalogue(tic_id, reference_image, reference_catalogue):
 
 
     return reference_catalogue
+
+
 
 '''
 reference_image = 'NG0451-5357_811_IMAGE81120200928041553.fits'

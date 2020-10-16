@@ -12,6 +12,6 @@ setup(
     package_dir={'PAOPhot2': 'src/PAOPhot2'},
     #package_data={'spec1d': ['data/gr5_-4_ref_spectra.dat', 'data/gr5_-4_ref_lines.dat']},
     #package_data={'tessffiextract': ['data/*.csv']},
-    scripts=['Utils/reduce_action'],
+    scripts=['Utils/reduce_action', 'Utils/find_best_comparisons', 'Utils/make_photometry_catalogue', 'Utils/postprocess_action'],
     #install_requires=['numba']
 )

@@ -1,0 +1,105 @@
+#!/home/sam/anaconda3/bin/python
+
+from astropy.table import Table, vstack
+from astropy.io import fits 
+import numpy as np 
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+import argparse, os, sys
+from astropy.wcs import WCS
+
+# Arg parser
+def arg_parse():
+    """
+    Parse the command line arguments
+    """
+    p = argparse.ArgumentParser("Reduce whole actions.")
+    p.add_argument('reference_catalogue',
+                   help='The reference catalogue from which to make the photometry catalogue with.',
+                   type=str)
+    p.add_argument('reference_image',
+                   help='Thereference image accompanyin gthe referene_catalogue.',
+                   type=str)
+    p.add_argument('tic_id',
+                   help='The target TIC ID which is the target of photometry.',
+                   type=int)
+    p.add_argument('--output_dir',
+                   help='The output directory.',
+                   type=str, default = '.')
+    return p.parse_args()
+
+
+if __name__=='__main__':
+    # First, pars the arguments
+    args = arg_parse() 
+    print('Making target catalogue for TIC-{:}\n\tUsing reference image {:}\n\treference catalogue {:}'.format(args.tic_id, args.reference_image, args.reference_catalogue))
+
+    # Open the frame
+    frame = fits.open(args.reference_image)[0]
+    frame_wcs = WCS(fits.open(args.reference_image)[0].header, fits.open(args.reference_image))
+    reference_catalogue = Table.read(args.reference_catalogue)
+    
+    ###############################################################
+    # Get target RA, dec, Tmag, G mag, and various metrics
+    ###############################################################
+    idx_target = np.where(reference_catalogue['tic_id']==args.tic_id)[0][0]
+    target_row = reference_catalogue[idx_target]
+    ra, dec, Tmag = reference_catalogue['ra_deg'][idx_target], reference_catalogue['dec_deg'][idx_target], reference_catalogue['Tmag'][idx_target]
+    x, y = frame_wcs.all_world2pix(reference_catalogue['ra_deg'],reference_catalogue['dec_deg'],0)
+    xtarg, ytarg = frame_wcs.all_world2pix(reference_catalogue['ra_deg'][idx_target],reference_catalogue['dec_deg'][idx_target],0)
+    rdist = np.hypot(x-xtarg, y-ytarg)
+    reference_catalogue['Xpos'] = x 
+    reference_catalogue['Ypos'] = y
+    reference_catalogue['Rdist'] = rdist
+    reference_catalogue['DeltaTmag'] = np.abs(reference_catalogue['Tmag'] - Tmag)
+
+    ###############################################################
+    # Cut the reference catalogue based on various metrics
+    ###############################################################
+    reference_catalogue_mask = (reference_catalogue['on_chip']==1) &\
+         (reference_catalogue['blended']==False) &\
+         (reference_catalogue['objType']=='STAR') &\
+         (reference_catalogue['lumclass']=='DWARF') &\
+         (reference_catalogue['Dilution_Tmag_AP3.0']< 0.1) &\
+         (x > 400) & (x < 1600) & (y > 400) & (y < 1600)
+
+    print('\tInitial masking bad comparison targets from {:,} to {:,}'.format(len(reference_catalogue), len(reference_catalogue[reference_catalogue_mask])))
+    reference_catalogue = reference_catalogue[reference_catalogue_mask] # get rid of naff
+    if len(reference_catalogue) < 50 : raise ValueError('Less that 50 targets remain after initial masking, aborting.')
+
+    ###############################################################################
+    # Increment magnitude to find the best 100 targets, or at least 10 with 3 mag
+    ###############################################################################
+    i = 1
+    while True:
+        if len(reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]) < 100 : 
+            print('\tFound {:,} comparison stars within Delta Tmag = {:.2f}'.format(len(reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]), i*0.2))
+            i += 1
+        else : 
+            reference_catalogue = reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]
+            print('\tFound {:,} comparison stars within Delta Tmag = {:.2f}, stopping.'.format(len(reference_catalogue), i*0.2))
+            break
+
+        if (i*0.2) > 3 : 
+            if len(reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]) < 10 : raise ValueError('Found less than 10 targets within 3 mag. Targets is Tmag = {:.3f}'.format(Tmag))
+            else : 
+                reference_catalogue = reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]
+                print('\tFound {:,} comparison stars within Delta Tmag = {:.2f}, stopping due to mag limit but continueing.'.format(len(reference_catalogue), i*0.2))
+                break
+        
+
+    ###############################################################
+    # Finally, add target to top
+    ###############################################################
+    if args.tic_id in reference_catalogue['tic_id']:
+        # its in. Lets put it at the start
+        print('\tTarget made the cut')
+        idx_target = np.where(reference_catalogue['tic_id']==args.tic_id)[0][0]
+        reference_catalogue.remove_row(idx_target) # remove it so we can sort by delta T mag
+    else : print('\tTarget did not made the cut, adding it now')
+    reference_catalogue = reference_catalogue[np.argsort(np.abs(np.array(np.abs(reference_catalogue['Tmag']-Tmag))))]
+    reference_catalogue = vstack((Table(target_row), reference_catalogue)) # makes sure target is at top
+    outfile = '{:}/TIC-{:}.fits'.format(args.output_dir, args.tic_id)
+    print('\tSaving target to {:}'.format(outfile) )
+    reference_catalogue.write(outfile, overwrite=True, format='fits')
+    exit()

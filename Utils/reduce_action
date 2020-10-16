@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
-from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
+#from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
 from PAOPhot2.time_conversion import convert_MJD
 from PAOPhot2.plot_functions import plot_target_night
 from astropy.io import fits 
@@ -181,7 +181,8 @@ if __name__=="__main__":
             photometry_catalogue = '{:}/target_catalogues/TIC-{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], args.target_ticid)
             if not os.path.isfile(photometry_catalogue) : 
                 print('Not found {:}, making it.'.format(photometry_catalogue))
-                make_TIC_target_catalogue(args.target_ticid, solved_autoguider_image_location, solved_autoguider_catalogue_location).write(photometry_catalogue, overwrite=True)
+                cmd = '/usr/local/anaconda3/bin/make_photometry_catalogue {:} {:} {:} --output_dir {:}/target_catalogues'.format(solved_autoguider_catalogue_location , solved_autoguider_image_location, args.target_ticid, PAOPhot_paths['PAOPhot2_data_path'] )
+                os.system(cmd)
             else:
                 print('Found {:}'.format(photometry_catalogue))
         else : photometry_catalogue = solved_autoguider_catalogue_location
@@ -198,14 +199,11 @@ if __name__=="__main__":
     os.system('mkdir -p {:}'.format(output_directory))
 
     # loop over the images, running WCSPhot for each 
-    for i in range(len(images_information)) : photometry_worker(i)
+    for i in range(len(images_information))[:50] : photometry_worker(i)
     #pool = Pool(4)
     #pool.map(photometry_worker, range(len(images_information))[:])
     #pool.close()
     #pool.join()
-
-
-
 
     print('\tImage reduction complete. Counting number of photfiles. ')
     reduced_mask = np.zeros(len(images_information), dtype=np.bool)
@@ -234,7 +232,7 @@ if __name__=="__main__":
     images_information = np.array(images_information)[reduced_mask]
 
 
-    print('Now concating the table')
+    print('\tNow concating the table')
     target_table = Table.read(photometry_catalogue)   #tic_id contains the names 
 
     # First, make the total table to hold all the photometry.
@@ -247,9 +245,9 @@ if __name__=="__main__":
     total_table = Table(names=table_header, dtype=table_dtype) 
 
 
-    for i in range(len(images_information))[:]:
+    for i in range(len(images_information))[:50]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
-        print('Collecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
+        print('\t\tCollecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
         phot_table = Table.read(phot_file)
         phot_table.remove_column('Sequence_number') # we dont need or account for this 
 
@@ -263,22 +261,27 @@ if __name__=="__main__":
         data = np.concatenate((np.array(row), data))
         total_table.add_row(data)
 
-    # Now plot the night 
-    print('Now plottting night...')
-    f, ax, date, lightcurve_array = plot_target_night(total_table , 'TIC-{:}'.format(args.target_ticid), fieldcam='{:}_{:}'.format(action_info['field'], action_info['camera_id']) )
+    print('\tSaving collected photometry')
+    total_table_name = '{:}/TIC-{:}_{:}_{:}_{:}_{:}_photometry.csv'.format(output_directory, args.target_ticid, action_info['field'], action_info['camera_id'], date, args.action)
+    total_table.write(total_table_name, overwrite=True, format='csv')
 
-    # Now start outputting
-    # output_directory is the action directoy 
-    action_lightcurve_directory = '{:}/action_lightcurves'.format(PAOPhot_paths['PAOPhot2_data_path'])
+    print('\tPostprocessing action')
+    # First check if the mask has been made or not for post processing 
+    # if not, make it 
+    photometry_catalogue_mask = photometry_catalogue[:-5] + '_mask.fits'
+    if os.path.isfile(photometry_catalogue_mask):
+        print('\t\tFound mask catalogue file for post processing action')
+        print('\t\t{:}'.format(photometry_catalogue_mask))
+    else:
+        print('\t\tMask not found, aming it')
+        cmd = '/usr/local/anaconda3/bin/find_best_comparisons {:} {:} --output_dir {:}'.format(photometry_catalogue , total_table_name, '/ngts/staging/archive/PAOPhot2/target_catalogues')
+        print('\t\t{:}'.format(cmd))
+        os.system(cmd)
 
-    print('Writing table')
-    total_table.write('{:}/TIC-{:}_{:}_{:}_{:}_{:}_photometry.csv'.format(output_directory, args.target_ticid, action_info['field'], action_info['camera_id'], date, args.action), overwrite=True, format='csv')
 
-    print('Saving figure...')
-    f.savefig('{:}/TIC-{:}_{:}_{:}_{:}_{:}.png'.format(output_directory, args.target_ticid, action_info['field'], action_info['camera_id'], date, args.action))
-    f.savefig('{:}/TIC-{:}_{:}_{:}_{:}_{:}.png'.format(action_lightcurve_directory, args.target_ticid, action_info['field'], action_info['camera_id'], date, args.action))
-    plt.close(f) 
+    # Now post-process action to plot etc. 
+    print('\t\tNow making plots')
+    cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --output_dir {:} '.format(photometry_catalogue , total_table_name ,  photometry_catalogue_mask , output_directory)
+    print('\t\t' + cmd)
 
-    print('Saving lightcurve file')
-    np.save('{:}/TIC-{:}_{:}_{:}_{:}_{:}.dat'.format(action_lightcurve_directory, args.target_ticid, action_info['field'], action_info['camera_id'], date, args.action), lightcurve_array)
-
+    print('Finished.')
