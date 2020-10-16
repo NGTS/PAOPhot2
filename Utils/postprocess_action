@@ -86,21 +86,20 @@ if __name__=="__main__":
 
     # Now purge the bad comparisons 
     #tics = np.delete(tics, np.where(tics==tic_id_target)) # get rid of the target
-    tics = tics[1:]
+    #tics = tics[1:]
     print('\tTarget = {:}'.format(tic_id_target))
-
     tics = np.delete(tics, np.where(photometery_catalogue_mask==False)) # get rid of the target
 
     # First, get the target flux 
-    target_flux = np.array(photometry_file['{:}_Aper_flux_3'.format(tic_id_target)])
-    target_flux_err = np.array(photometry_file['{:}_Aper_flux_3_err'.format(tic_id_target)])
+    target_flux = np.array(photometry_file[flux_column_target])
+    target_flux_err = np.array(photometry_file[flux_column_target + '_err'])
 
     # Now get the comp flux and errors
     comp_flux = np.zeros(target_flux.shape[0])
     comp_flux_err = np.zeros(target_flux.shape[0])
     for i in range(tics.shape[0])[:] : 
-        comp_flux = comp_flux + np.array(photometry_file['{:}_Aper_flux_3'.format(tics[i])])
-        comp_flux_err = comp_flux_err + np.array(photometry_file['{:}_Aper_flux_3_err'.format(tics[i])])**2
+        comp_flux = comp_flux + np.array(photometry_file[flux_columns[i]])
+        comp_flux_err = comp_flux_err + np.array(photometry_file[flux_columns[i] + '_err'])**2
     comp_flux_err = np.sqrt(comp_flux_err)
 
 
@@ -112,7 +111,7 @@ if __name__=="__main__":
     # Finally, create the 
     tmp = np.array([np.array(photometry_file['JD']), detrended_flux, detrended_flux_err,]).T
     np.savetxt('{:}/{:}_{:}_{:}_FLUX.dat'.format(args.output_dir, tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
-    np.savetxt('{:}/{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
+    #np.savetxt('{:}/{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
 
     # Now bin the data
     t_bin, f_bin, f_bin_err = lc_bin(np.array(photometry_file['JD']), detrended_flux, 0.5/24/6)
@@ -161,4 +160,4 @@ if __name__=="__main__":
 
     #return f, plt.gca() , Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10], tmp
     plt.savefig('{:}/{:}.png'.format(args.output_dir, args.photometry_file.split('/')[-1][:-4]))
-    plt.close()
+    plt.show()

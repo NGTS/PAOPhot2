@@ -54,7 +54,7 @@ if __name__=="__main__":
     while n_reject > 0:
         med_noise = np.median(STD_MEDIAN_to_clip)
         mad_noise = np.median(np.abs(STD_MEDIAN_to_clip-med_noise))
-        mask_sig = np.where(STD_MEDIAN_to_clip < med_noise + 4*mad_noise)[0]
+        mask_sig = np.where((STD_MEDIAN_to_clip < med_noise + 4*mad_noise))[0]
         n_reject = len(STD_MEDIAN_to_clip) - len(mask_sig)
         STD_MEDIAN_to_clip = np.copy(STD_MEDIAN_to_clip[mask_sig]) 
         print('\titeration {:<2,} rejected {:<3,} comparisons out of {:<3,}'.format(i, n_reject, STD_MEDIAN.shape[0]))
