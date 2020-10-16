@@ -78,4 +78,4 @@ if __name__=="__main__":
     mask_col = np.ones(x.shape[0], dtype = np.bool)
     mask_col[mask] = 0
     mask_table = Table([mask_col], names = ['MASK'])
-    mask_table.write(args.photometery_catalogue.split('/')[-1][:-5] + '_mask.fits', format='fits', overwrite=True)
+    mask_table.write('{:}/{:}_mask.fits'.format(args.output_dir, args.photometery_catalogue.split('/')[-1][:-5]), format='fits', overwrite=True)

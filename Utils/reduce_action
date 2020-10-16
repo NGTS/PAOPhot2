@@ -285,5 +285,5 @@ if __name__=="__main__":
     print('\t\tNow making plots')
     cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --output_dir {:} '.format(photometry_catalogue , total_table_name ,  photometry_catalogue_mask , output_directory)
     print('\t\t' + cmd)
-
+    os.system(cmd)
     print('Finished.')
