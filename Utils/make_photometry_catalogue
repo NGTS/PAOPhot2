@@ -64,7 +64,7 @@ if __name__=='__main__':
          (reference_catalogue['lumclass']=='DWARF') &\
          (reference_catalogue['Dilution_Tmag_AP3.0']< 0.1) &\
          (x > 400) & (x < 1600) & (y > 400) & (y < 1600) &\
-         ( np.abs(reference_catalogue['gaiarp'] - BPRP)< 1)
+         ( np.abs( (reference_catalogue['gaiabp'] - reference_catalogue['gaiarp']) - BPRP)< 1)
 
     print('\tInitial masking bad comparison targets from {:,} to {:,}'.format(len(reference_catalogue), len(reference_catalogue[reference_catalogue_mask])))
     reference_catalogue = reference_catalogue[reference_catalogue_mask] # get rid of naff
