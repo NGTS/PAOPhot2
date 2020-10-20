@@ -44,9 +44,9 @@ if __name__=='__main__':
     ###############################################################
     idx_target = np.where(reference_catalogue['tic_id']==args.tic_id)[0][0]
     target_row = reference_catalogue[idx_target]
-    ra, dec, Tmag, BPRP = reference_catalogue['ra_deg'][idx_target], reference_catalogue['dec_deg'][idx_target], reference_catalogue['Tmag'][idx_target] , reference_catalogue['gaiarp'][idx_target]
+    ra, dec, Tmag, BPRP = reference_catalogue['ra_deg'][idx_target], reference_catalogue['dec_deg'][idx_target], reference_catalogue['Tmag'][idx_target] , reference_catalogue['gaiabp'][idx_target] - reference_catalogue['gaiarp'][idx_target]
     print('\tBPRP = {:}'.format(BPRP))
-    if np.isnan(BPRP) or np.isinf(BPRP) : BPRP = reference_catalogue['gaiarp'] # so everything passes
+    if np.isnan(BPRP) or np.isinf(BPRP) : BPRP = reference_catalogue['gaiabp'] - reference_catalogue['gaiarp'] # so everything passes
     x, y = frame_wcs.all_world2pix(reference_catalogue['ra_deg'],reference_catalogue['dec_deg'],0)
     xtarg, ytarg = frame_wcs.all_world2pix(reference_catalogue['ra_deg'][idx_target],reference_catalogue['dec_deg'][idx_target],0)
     rdist = np.hypot(x-xtarg, y-ytarg)
@@ -64,7 +64,7 @@ if __name__=='__main__':
          (reference_catalogue['lumclass']=='DWARF') &\
          (reference_catalogue['Dilution_Tmag_AP3.0']< 0.1) &\
          (x > 400) & (x < 1600) & (y > 400) & (y < 1600) &\
-         ( np.abs(reference_catalogue['gaiarp'] - BPRP)< 2)
+         ( np.abs(reference_catalogue['gaiarp'] - BPRP)< 1)
 
     print('\tInitial masking bad comparison targets from {:,} to {:,}'.format(len(reference_catalogue), len(reference_catalogue[reference_catalogue_mask])))
     reference_catalogue = reference_catalogue[reference_catalogue_mask] # get rid of naff
