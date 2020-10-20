@@ -45,6 +45,8 @@ if __name__=='__main__':
     idx_target = np.where(reference_catalogue['tic_id']==args.tic_id)[0][0]
     target_row = reference_catalogue[idx_target]
     ra, dec, Tmag, BPRP = reference_catalogue['ra_deg'][idx_target], reference_catalogue['dec_deg'][idx_target], reference_catalogue['Tmag'][idx_target] , reference_catalogue['gaiarp'][idx_target]
+    print('\tBPRP = {:}'.format(BPRP))
+    if np.isnan(BPRP) or np.isinf(BPRP) : BPRP = reference_catalogue['gaiarp'] # so everything passes
     x, y = frame_wcs.all_world2pix(reference_catalogue['ra_deg'],reference_catalogue['dec_deg'],0)
     xtarg, ytarg = frame_wcs.all_world2pix(reference_catalogue['ra_deg'][idx_target],reference_catalogue['dec_deg'][idx_target],0)
     rdist = np.hypot(x-xtarg, y-ytarg)
