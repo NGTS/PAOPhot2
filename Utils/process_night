@@ -21,7 +21,7 @@ for i in range(len(actions)):
                     mask[i] = True
 
 actions = actions[mask]
-
+print(actions[0])
 print('Making jobs for actions')
 for action in actions[:]:
     job_file =  '/ngts/staging/archive/PAOPhot2/jobs/PAOPhot_action{:}.sh'.format(action['action_id'])
