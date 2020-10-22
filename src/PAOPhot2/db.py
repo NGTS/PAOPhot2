@@ -8,6 +8,7 @@ from collections import defaultdict
 import pymysql
 from astropy.table import Table 
 import numpy as np
+import os, sys 
 
 PAOPhot_paths = {'PAOPhot2_path' : '/home/ops/dev/PAOPhot2',
               'PAOPhot2_data_path' : '/ngts/staging/archive/PAOPhot2',
