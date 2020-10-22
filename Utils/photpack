@@ -1,0 +1,66 @@
+#!/home/sam/anaconda3/bin/python
+
+# Imports
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import argparse, os, sys
+from astropy.table import Table 
+import numpy as np 
+from scipy.stats import sem
+from astropy.time import Time
+from astropy.stats import sigma_clip
+from PAOPhot2.mag_conversion import convertFluxToMags
+from PAOPhot2.db import PAOPhot_paths
+
+
+
+# Arg parser
+def arg_parse():
+    """
+    Parse the command line arguments
+    """
+    p = argparse.ArgumentParser("Pack PAOPhot2 photometry")
+    return p.parse_args()
+
+
+if __name__=="__main__":
+    # parse the arguemnts
+    args = arg_parse()
+
+    # get a list of the photometry files to pack 
+    photometry_files = glob.glob('{:}/action_lightcurves/*_FLUX.dat'.format(PAOPhot_paths['PAOPhot2_data_path'])) 
+    photometry_files.sort()
+    print('Found {:,} files'.format(len(photometry_files)))
+
+    # Get a list of unique objects, and create the list of files for each object
+    objects = np.unique([t.split('_')[0] for i in photometry_files])
+    object_dict = {i : [] for i in objects}
+    for file in photometry_files : object_dict[object].append([file, *file.split('_')[:-1]]) # file , object, field, camera, date, _ , -1 is FLUX.dat
+
+    # now we have a list of photometry, we can start paking
+    for i in range(len(objects)):
+        print('Packing {:} with {:,} files'.format(objects[i], len(object_dict[objects[i]])), end = ' ')
+        object_data = None
+        for j in range(len(object_dict[objects[i]])):
+            filename, object, field, camera, date = object_dict[objects[i]]
+            tmp = np.loadtxt(filename)
+
+            # Now hstack filename, object, field, 
+            tmp = np.vstack((tmp.T, np.tile(filename)*tmp.shape[0],
+                                    np.tile(object)*tmp.shape[0], 
+                                    np.tile(field)*tmp.shape[0], 
+                                    np.tile(camera)*tmp.shape[0], 
+                                    np.tile(date)*tmp.shape[0] )).T
+            # Now add to total data 
+            if i==0 : object_data = np.copy(tmp) 
+            else    : object_data = np.vstack((object_data, tmp))
+
+        # Finally, lets save the data with the appropriate filename and header
+        headers = ['JD', 'FLUX', 'FLUX_ERR', 'FILENAME', 'OBJECT', 'FIELD', 'CAMERA', 'DATE']
+        output_filename = '{:}/output_lightcurves/{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], object_dict[objects[i]][1])
+        t = Table(object_data, names=headers)
+        t.write(output_filename, format='fits')
+
+        print('completed.')
+
