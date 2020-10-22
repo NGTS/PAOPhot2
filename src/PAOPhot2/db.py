@@ -6,6 +6,8 @@ Any functions that interact with the database should go here
 from contextlib import contextmanager
 from collections import defaultdict
 import pymysql
+from astropy.table import Table 
+import numpy as np
 
 PAOPhot_paths = {'PAOPhot2_path' : '/home/ops/dev/PAOPhot2',
               'PAOPhot2_data_path' : '/ngts/staging/archive/PAOPhot2',
@@ -144,3 +146,21 @@ def get_autoguider_information(field, camera_id):
         cur.execute(qry)
         result = cur.fetchone()
     return result
+
+
+
+def get_ticid_from_toi(TOI_ID):
+    datafile =  '{:}/TOI_data/TOI-data.csv'.format(PAOPhot_paths['PAOPhot2_data_path']) 
+    if not os.path.isfile(datafile):
+        print('Unable to find {:}'.format(datafile))
+        return -99
+    
+    # Load the table
+    t = Table.read(datafile, format='csv')
+
+    # look for out TOI
+    idxs = np.argwhere(np.array(t['TOI'], dtype=int)==TOI_ID)[0]
+    if idxs[0].shape[0]==0:
+        print('TOI-{:} is not in {:}'.format(TOI_ID, datafile))
+        return -99 
+    else return int(t['TIC ID'][idxs[0][0]])
