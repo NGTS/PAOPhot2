@@ -49,10 +49,10 @@ if __name__=="__main__":
             tmp = np.loadtxt(filename)
 
             # Now hstack filename, object, field, 
-            tmp = np.vstack((tmp.T, np.tile(object)*tmp.shape[0], 
-                                    np.tile(field)*tmp.shape[0], 
-                                    np.tile(camera)*tmp.shape[0], 
-                                    np.tile(date)*tmp.shape[0] )).T
+            tmp = np.vstack((tmp.T, np.tile(object,tmp.shape[0]), 
+                                    np.tile(field,tmp.shape[0]), 
+                                    np.tile(camera,tmp.shape[0]), 
+                                    np.tile(date,tmp.shape[0]) )).T
             # Now add to total data 
             if i==0 : object_data = np.copy(tmp) 
             else    : object_data = np.vstack((object_data, tmp))
