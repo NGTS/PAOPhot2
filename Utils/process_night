@@ -5,7 +5,7 @@ from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi
 
 
 
-night = '2020-10-11'
+night = sys.argv[1]
 actions = np.array(get_actions_for_night(night))
 mask = np.zeros(len(actions), dtype = np.bool)
 for i in range(len(actions)):
