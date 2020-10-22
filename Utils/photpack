@@ -47,15 +47,21 @@ if __name__=="__main__":
         for j in range(len(object_dict[objects[i]])):
             filename, object, field, camera, date = object_dict[objects[i]][j]
             tmp = np.loadtxt(filename)
-
+            print('a' , tmp.shape)
             # Now hstack filename, object, field, 
             tmp = np.vstack((tmp.T, np.tile(object,tmp.shape[0]), 
                                     np.tile(field,tmp.shape[0]), 
                                     np.tile(camera,tmp.shape[0]), 
                                     np.tile(date,tmp.shape[0]) )).T
+
+            print('b' , tmp.shape)
+
             # Now add to total data 
             if i==0 : object_data = np.copy(tmp) 
             else    : object_data = np.vstack((object_data, tmp))
+
+        print('c' , object_data.shape)
+
 
         # Finally, lets save the data with the appropriate filename and header
         headers = ['JD', 'FLUX', 'FLUX_ERR', 'OBJECT', 'FIELD', 'CAMERA', 'DATE']
