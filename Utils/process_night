@@ -12,9 +12,13 @@ for i in range(len(actions)):
         if actions[i]['campaign'][:3] =='TIC':
                 actions[i]['TICID'] = actions[i]['campaign'].split('_')[0].split('-')[1]
                 mask[i] = True
+                print('\tFound {:}'.format(actions[i]['campaign'].split('_')[0]))
         elif actions[i]['campaign'][:3] =='TOI':
                 actions[i]['TICID'] = get_ticid_from_toi(actions[i]['campaign'].split('_')[0].split('-')[1])
-                mask[i] = True
+                if actions[i]['TICID']!= -99 : 
+                    print('\tFound {:} [TIC-{:}]'.format(actions[i]['campaign'].split('_')[0], actions[i]['TICID']))
+                    mask[i] = True
+
 actions = actions[mask]
 
 for action in actions[:]:
@@ -36,5 +40,5 @@ for action in actions[:]:
     f.write('\n\n{:}'.format(cmd))
 
     f.close()
-    os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
+    #os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
 
