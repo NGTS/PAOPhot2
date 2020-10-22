@@ -35,7 +35,7 @@ if __name__=="__main__":
     print('Found {:,} files'.format(len(photometry_files)))
 
     # Get a list of unique objects, and create the list of files for each object
-    objects = np.unique([t.split('_')[0] for i in photometry_files])
+    objects = np.unique([i.split('_')[0] for i in photometry_files])
     object_dict = {i : [] for i in objects}
     for file in photometry_files : object_dict[object].append([file, *file.split('_')[:-1]]) # file , object, field, camera, date, _ , -1 is FLUX.dat
 
