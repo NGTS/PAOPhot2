@@ -1,18 +1,17 @@
-
 #!/home/sam/anaconda3/bin/python
 
 import os, sys, numpy as np
 from PAOPhot2.db import PAOPhot_paths
 
 night = sys.argv[1] 
-job_file = '{:}/jobs/PAOPhot2_night_{:}.sh.format(PAOPhot_paths['PAOPhot2_data_path'], night)
-log_file = '{:}/logs/PAOPhot2_night_{:}.log.format(PAOPhot_paths['PAOPhot2_data_path'], night)
+job_file = '{:}/jobs/PAOPhot2_night_{:}.sh'.format(PAOPhot_paths['PAOPhot2_data_path'], night)
+log_file = '{:}/logs/PAOPhot2_night_{:}.log'.format(PAOPhot_paths['PAOPhot2_data_path'], night)
 
 f = open(job_file, 'w+')
 f.write('#!/bin/tcsh\n')
 f.write('#$ -N process_night\n')
 f.write('#$ -hold_jid actionsummary\n')
-f.write(#$ -o {:}\n'.format(log_file))
-f.write(#$ -e {:}\n'.format(log_file))
+f.write('#$ -o {:}\n'.format(log_file))
+f.write('#$ -e {:}\n'.format(log_file))
 f.write('\n/usr/local/anaconda3/bin/process_night {:}'.format(night))
 f.close()
