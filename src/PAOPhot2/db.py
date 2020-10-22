@@ -163,4 +163,4 @@ def get_ticid_from_toi(TOI_ID):
     if idxs[0].shape[0]==0:
         print('TOI-{:} is not in {:}'.format(TOI_ID, datafile))
         return -99 
-    else return int(t['TIC ID'][idxs[0][0]])
+    else : return int(t['TIC ID'][idxs[0][0]])
