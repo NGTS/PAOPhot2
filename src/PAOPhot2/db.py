@@ -158,10 +158,10 @@ def get_ticid_from_toi(TOI_ID):
     
     # Load the table
     t = Table.read(datafile, format='csv')
-    print(len(t), t.colnames)
 
     # look for out TOI
     idxs = np.argwhere(np.array(t['TOI'], dtype=int)==TOI_ID)
+    print(TOI_ID, idxs)
     if idxs[0].shape[0]==0:
         print('TOI-{:} is not in {:}'.format(TOI_ID, datafile))
         return -99 
