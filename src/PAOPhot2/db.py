@@ -158,6 +158,7 @@ def get_ticid_from_toi(TOI_ID):
     
     # Load the table
     t = Table.read(datafile, format='csv')
+    print(len(t), t.colnames)
 
     # look for out TOI
     idxs = np.argwhere(np.array(t['TOI'], dtype=int)==TOI_ID)
