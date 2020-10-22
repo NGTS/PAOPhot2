@@ -151,6 +151,7 @@ def get_autoguider_information(field, camera_id):
 
 
 def get_ticid_from_toi(TOI_ID):
+    TOI_ID = int(TOI_ID)
     datafile =  '{:}/TOI_data/TOI-data.csv'.format(PAOPhot_paths['PAOPhot2_data_path']) 
     if not os.path.isfile(datafile):
         print('Unable to find {:}'.format(datafile))
@@ -160,8 +161,7 @@ def get_ticid_from_toi(TOI_ID):
     t = Table.read(datafile, format='csv')
 
     # look for out TOI
-    idxs = np.argwhere(np.array(t['TOI'], dtype=int)==int(TOI_ID))
-    print(int(TOI_ID), idxs)
+    idxs = np.argwhere(np.array(t['TOI'], dtype=int)==TOI_ID)
     if idxs[0].shape[0]==0:
         print('TOI-{:} is not in {:}'.format(TOI_ID, datafile))
         return -99 
