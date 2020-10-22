@@ -15,3 +15,5 @@ f.write('#$ -o {:}\n'.format(log_file))
 f.write('#$ -e {:}\n'.format(log_file))
 f.write('\n/usr/local/anaconda3/bin/process_night {:}'.format(night))
 f.close()
+
+os.system('qsub {:}'.format(job_file))
