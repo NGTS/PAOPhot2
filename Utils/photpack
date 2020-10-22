@@ -59,7 +59,7 @@ if __name__=="__main__":
 
         # Finally, lets save the data with the appropriate filename and header
         headers = ['JD', 'FLUX', 'FLUX_ERR', 'OBJECT', 'FIELD', 'CAMERA', 'DATE']
-        output_filename = '{:}/output_lightcurves/{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], object_dict[objects[i]][1])
+        output_filename = '{:}/output_lightcurves/{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], object_dict[objects[i]][0][1])
         t = Table(object_data, names=headers)
         t.write(output_filename, format='fits')
 
