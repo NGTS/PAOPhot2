@@ -1,7 +1,7 @@
 #!/home/sam/anaconda3/bin/python
 
 import os, sys, numpy as np
-from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi
+from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi , PAOPhot_paths
 
 
 
@@ -26,8 +26,8 @@ else:
     actions = actions[mask]
     print('Making jobs for actions')
     for action in actions[:]:
-        job_file =  '/ngts/staging/archive/PAOPhot2/jobs/PAOPhot_action{:}.sh'.format(action['action_id'])
-        log_file =  '/ngts/staging/archive/PAOPhot2/logs/PAOPhot_action{:}.log'.format(action['action_id'])
+        job_file =  '{:}/jobs/PAOPhot_action{:}.sh'.format(PAOPhot_paths['PAOPhot2_data_path'], action['action_id'])
+        log_file =  '{:}/logs/PAOPhot_action{:}.log'.format(PAOPhot_paths['PAOPhot2_data_path'], action['action_id'])
 
         f = open(job_file, 'w+')
         f.write('\n#!/bin/tcsh')
