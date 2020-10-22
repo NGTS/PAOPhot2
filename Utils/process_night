@@ -22,8 +22,8 @@ for i in range(len(actions)):
 
 actions = actions[mask]
 
+print('Making jobs for actions')
 for action in actions[:]:
-    print('action {:} with target TIC-{:}'.format(action['action_id'], action['TICID']))
     job_file =  '/ngts/staging/archive/PAOPhot2/jobs/PAOPhot_action{:}.sh'.format(action['action_id'])
     log_file =  '/ngts/staging/archive/PAOPhot2/logs/PAOPhot_action{:}.log'.format(action['action_id'])
 
@@ -43,3 +43,4 @@ for action in actions[:]:
     f.close()
     #os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
 
+    print('\tSubmitted job for TIC-{:} corrosponding to action {:}'.format(action['TICID'], action['action_id']))
