@@ -1,6 +1,6 @@
 #!/home/sam/anaconda3/bin/python
 
-import os, numpy as np
+import os, sys, numpy as np
 from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi
 
 
