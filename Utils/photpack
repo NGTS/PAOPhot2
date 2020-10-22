@@ -45,7 +45,7 @@ if __name__=="__main__":
         print('Packing {:} with {:,} files'.format(objects[i], len(object_dict[objects[i]])), end = ' ')
         object_data = None
         for j in range(len(object_dict[objects[i]])):
-            filename, object, field, camera, date = object_dict[objects[i]]
+            filename, object, field, camera, date = object_dict[objects[i][j]]
             tmp = np.loadtxt(filename)
 
             # Now hstack filename, object, field, 
