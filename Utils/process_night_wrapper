@@ -9,7 +9,7 @@ log_file = '{:}/logs/PAOPhot2_night_{:}.log'.format(PAOPhot_paths['PAOPhot2_data
 
 f = open(job_file, 'w+')
 f.write('#!/bin/tcsh\n')
-f.write('#$ -N process_night\n')
+f.write('#$ -N PAOPhot_night_wrapper_{:}\n'.format(night))
 f.write('#$ -hold_jid actionsummary\n')
 f.write('#$ -o {:}\n'.format(log_file))
 f.write('#$ -e {:}\n'.format(log_file))
