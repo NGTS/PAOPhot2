@@ -10,10 +10,11 @@ import numpy as np
 from scipy.stats import sem
 from astropy.time import Time
 from astropy.stats import sigma_clip
+import glob
+
+
 from PAOPhot2.mag_conversion import convertFluxToMags
 from PAOPhot2.db import PAOPhot_paths
-
-
 
 # Arg parser
 def arg_parse():
