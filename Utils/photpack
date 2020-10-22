@@ -38,7 +38,7 @@ if __name__=="__main__":
     objects = np.unique([i.split('/')[-1].split('_')[0] for i in photometry_files])
     object_dict = {i : [] for i in objects}
     for file in photometry_files : 
-        object_dict[file.split('_')[0]].append([file, *file.split('/')[-1].split('_')[:-1]]) # file , object, field, camera, date, _ , -1 is FLUX.dat
+        object_dict[file.split('/')[-1].split('_')[0]].append([file, *file.split('/')[-1].split('_')[:-1]]) # file , object, field, camera, date, _ , -1 is FLUX.dat
 
     # now we have a list of photometry, we can start paking
     for i in range(len(objects)):
