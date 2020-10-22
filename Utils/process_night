@@ -8,39 +8,41 @@ from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi
 night = sys.argv[1]
 actions = np.array(get_actions_for_night(night))
 print('Found {:,} actions'.format(len(actions)))
-mask = np.zeros(len(actions), dtype = np.bool)
-for i in range(len(actions)):
-        if actions[i]['campaign'][:3] =='TIC':
-                actions[i]['TICID'] = actions[i]['campaign'].split('_')[0].split('-')[1]
-                mask[i] = True
-                print('\tFound {:}'.format(actions[i]['campaign'].split('_')[0]))
-        elif actions[i]['campaign'][:3] =='TOI':
-                actions[i]['TICID'] = get_ticid_from_toi(actions[i]['campaign'].split('_')[0].split('-')[1])
-                if actions[i]['TICID']!= -99 : 
-                    print('\tFound {:} [TIC-{:}]'.format(actions[i]['campaign'].split('_')[0], actions[i]['TICID']))
+if len(actions)==0 :
+    print('Finished.')
+else:
+    mask = np.zeros(len(actions), dtype = np.bool)
+    for i in range(len(actions)):
+            if actions[i]['campaign'][:3] =='TIC':
+                    actions[i]['TICID'] = actions[i]['campaign'].split('_')[0].split('-')[1]
                     mask[i] = True
+                    print('\tFound {:}'.format(actions[i]['campaign'].split('_')[0]))
+            elif actions[i]['campaign'][:3] =='TOI':
+                    actions[i]['TICID'] = get_ticid_from_toi(actions[i]['campaign'].split('_')[0].split('-')[1])
+                    if actions[i]['TICID']!= -99 : 
+                        print('\tFound {:} [TIC-{:}]'.format(actions[i]['campaign'].split('_')[0], actions[i]['TICID']))
+                        mask[i] = True
 
-actions = actions[mask]
-print(actions[0])
-print('Making jobs for actions')
-for action in actions[:]:
-    job_file =  '/ngts/staging/archive/PAOPhot2/jobs/PAOPhot_action{:}.sh'.format(action['action_id'])
-    log_file =  '/ngts/staging/archive/PAOPhot2/logs/PAOPhot_action{:}.log'.format(action['action_id'])
+    actions = actions[mask]
+    print('Making jobs for actions')
+    for action in actions[:]:
+        job_file =  '/ngts/staging/archive/PAOPhot2/jobs/PAOPhot_action{:}.sh'.format(action['action_id'])
+        log_file =  '/ngts/staging/archive/PAOPhot2/logs/PAOPhot_action{:}.log'.format(action['action_id'])
 
-    f = open(job_file, 'w+')
-    f.write('\n#!/bin/tcsh')
-    #f.write('\n#$ -S /bin/tcsh')
-    #f.write('\n#$ -M ngtsops@warwick.ac.uk')
-    f.write('\n#$ -N PAOPhot_action{:}'.format(action['action_id']))
-    f.write('\n#$ -o {:}'.format(log_file))
-    f.write('\n#$ -e {:}'.format(log_file))
-    #f.write('\nexport LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/wcslib/lib')
-    f.write('\nexport LD_LIBRARY_PATH=/usr/local/telescope/CSIMC/icc/libc5:/usr/local/telescope/lib::/usr/local/lib:/usr/local/wcslib/lib')
-    #$((NSLOTS/2))
-    cmd = '/usr/local/anaconda3/bin/reduce_action {:}  --threads 1 --target_ticid {:} --astr_net_tmp $TMPDIR'.format(action['action_id'], action['TICID'])
-    f.write('\n\n{:}'.format(cmd))
+        f = open(job_file, 'w+')
+        f.write('\n#!/bin/tcsh')
+        #f.write('\n#$ -S /bin/tcsh')
+        #f.write('\n#$ -M ngtsops@warwick.ac.uk')
+        f.write('\n#$ -N PAOPhot_action{:}'.format(action['action_id']))
+        f.write('\n#$ -o {:}'.format(log_file))
+        f.write('\n#$ -e {:}'.format(log_file))
+        #f.write('\nexport LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/wcslib/lib')
+        f.write('\nexport LD_LIBRARY_PATH=/usr/local/telescope/CSIMC/icc/libc5:/usr/local/telescope/lib::/usr/local/lib:/usr/local/wcslib/lib')
+        #$((NSLOTS/2))
+        cmd = '/usr/local/anaconda3/bin/reduce_action {:}  --threads 1 --target_ticid {:} --astr_net_tmp $TMPDIR'.format(action['action_id'], action['TICID'])
+        f.write('\n\n{:}'.format(cmd))
 
-    f.close()
-    #os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
+        f.close()
+        #os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
 
-    print('\tSubmitted job for TIC-{:} corrosponding to action {:}'.format(action['TICID'], action['action_id']))
+        print('\tSubmitted job for TIC-{:} corrosponding to action {:} [Field : {:} -- Camera : {:} -- Nimages {:,}]'.format(action['TICID'], action['action_id'], action['field'], action['camera_id'], action['num_images']))
