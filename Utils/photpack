@@ -59,8 +59,9 @@ if __name__=="__main__":
             else    : object_data = np.vstack((object_data, tmp))
 
         # Finally, lets save the data with the appropriate filename and header
-        headers = ['JD', 'FLUX', 'FLUX_ERR', 'OBJECT', 'FIELD', 'CAMERA', 'DATE']
+        headers = ['JD',       'FLUX',     'FLUX_ERR', 'OBJECT', 'FIELD', 'CAMERA', 'DATE']
+        dtype = [  np.float64, np.float64, np.float64, str,       str,     int,      str]
         output_filename = '{:}/output_lightcurves/{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], object_dict[objects[i]][0][1])
-        t = Table(object_data, names=headers)
+        t = Table(object_data, names=headers,dtype=dtype)
         t.write(output_filename, format='fits', overwrite=True)
 
