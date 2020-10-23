@@ -64,4 +64,5 @@ if __name__=="__main__":
         output_filename = '{:}/output_lightcurves/{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], object_dict[objects[i]][0][1])
         t = Table(object_data, names=headers,dtype=dtype)
         t.write(output_filename, format='fits', overwrite=True)
+        print(' complete.')
 
