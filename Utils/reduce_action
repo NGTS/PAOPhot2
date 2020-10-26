@@ -275,7 +275,7 @@ if __name__=="__main__":
         print('\t\tFound mask catalogue file for post processing action')
         print('\t\t{:}'.format(photometry_catalogue_mask))
     else:
-        print('\t\tMask not found, aming it')
+        print('\t\tMask not found, making it')
         cmd = '/usr/local/anaconda3/bin/find_best_comparisons {:} {:} --output_dir {:}'.format(photometry_catalogue , total_table_name, '/ngts/staging/archive/PAOPhot2/target_catalogues')
         print('\t\t{:}'.format(cmd))
         os.system(cmd)

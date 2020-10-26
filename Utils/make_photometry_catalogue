@@ -103,7 +103,7 @@ if __name__=='__main__':
     ####################################################################################
     # Now get the arguments of the the smallest Euclidean distances and make the table #
     ####################################################################################
-    photometry_table_indexes = np.argsort(distances)
+    photometry_table_indexes = np.argsort(distances[:100])
     photometry_table = reference_catalogue[photometry_table_indexes]
 
     ####################################################################################
