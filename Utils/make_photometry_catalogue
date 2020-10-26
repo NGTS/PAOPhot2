@@ -1,12 +1,14 @@
 #!/home/sam/anaconda3/bin/python
 
-from astropy.table import Table, vstack
+from astropy.table import Table, vstack, Column
 from astropy.io import fits 
 import numpy as np 
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 import argparse, os, sys
 from astropy.wcs import WCS
+from scipy.stats import median_absolute_deviation
+from tqdm import tqdm 
 
 # Arg parser
 def arg_parse():
@@ -38,22 +40,24 @@ if __name__=='__main__':
     frame = fits.open(args.reference_image)[0]
     frame_wcs = WCS(fits.open(args.reference_image)[0].header, fits.open(args.reference_image))
     reference_catalogue = Table.read(args.reference_catalogue)
-    
-    ###############################################################
-    # Get target RA, dec, Tmag, G mag, and various metrics
-    ###############################################################
+
+    ###############################################################################
+    # Find the target row and store it, removing it so we can compare comparisons #
+    ###############################################################################
     idx_target = np.where(reference_catalogue['tic_id']==args.tic_id)[0][0]
-    target_row = reference_catalogue[idx_target]
-    ra, dec, Tmag, BPRP = reference_catalogue['ra_deg'][idx_target], reference_catalogue['dec_deg'][idx_target], reference_catalogue['Tmag'][idx_target] , reference_catalogue['gaiabp'][idx_target] - reference_catalogue['gaiarp'][idx_target]
-    print('\tBPRP = {:}'.format(BPRP))
+    target_row = reference_catalogue[idx_target:(idx_target+1)] # hack to get row copy instead of Row object which is by reference
+    BPRP = target_row['gaiabp'][0] - target_row['gaiarp'][0]   
     if np.isnan(BPRP) or np.isinf(BPRP) : BPRP = reference_catalogue['gaiabp'] - reference_catalogue['gaiarp'] # so everything passes
+    reference_catalogue.remove_row(idx_target) # remove it so we can make comparisons
+
+    ###################################################################################
+    # First, lets get all the targets near our target so we can check false-positives #
+    ###################################################################################
     x, y = frame_wcs.all_world2pix(reference_catalogue['ra_deg'],reference_catalogue['dec_deg'],0)
-    xtarg, ytarg = frame_wcs.all_world2pix(reference_catalogue['ra_deg'][idx_target],reference_catalogue['dec_deg'][idx_target],0)
-    rdist = np.hypot(x-xtarg, y-ytarg)
-    reference_catalogue['Xpos'] = x 
-    reference_catalogue['Ypos'] = y
-    reference_catalogue['Rdist'] = rdist
-    reference_catalogue['DeltaTmag'] = np.abs(reference_catalogue['Tmag'] - Tmag)
+    xtarget, ytarget = frame_wcs.all_world2pix(target_row['ra_deg'][0],target_row['dec_deg'][0],0)
+    R_dist = np.hypot(x-xtarget, y-ytarget)
+    FP_mask = (R_dist < 6.) | ((R_dist < 12.) & ( reference_catalogue['Tmag'] < target_row['Tmag'][0]))
+    FP_table = reference_catalogue[FP_mask]
 
     ###############################################################
     # Cut the reference catalogue based on various metrics
@@ -70,39 +74,48 @@ if __name__=='__main__':
     reference_catalogue = reference_catalogue[reference_catalogue_mask] # get rid of naff
     if len(reference_catalogue) < 50 : raise ValueError('Less that 50 targets remain after initial masking, aborting.')
 
-    ###############################################################################
-    # Increment magnitude to find the best 100 targets, or at least 10 with 3 mag
-    ###############################################################################
-    i = 1
-    while True:
-        if len(reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]) < 100 : 
-            print('\tFound {:,} comparison stars within Delta Tmag = {:.2f}'.format(len(reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]), i*0.2))
-            i += 1
-        else : 
-            reference_catalogue = reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]
-            print('\tFound {:,} comparison stars within Delta Tmag = {:.2f}, stopping.'.format(len(reference_catalogue), i*0.2))
-            break
-
-        if (i*0.2) > 3 : 
-            if len(reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]) < 10 : raise ValueError('Found less than 10 targets within 3 mag. Targets is Tmag = {:.3f}'.format(Tmag))
-            else : 
-                reference_catalogue = reference_catalogue[(np.abs(reference_catalogue['Tmag'] - Tmag) < (i*0.2))]
-                print('\tFound {:,} comparison stars within Delta Tmag = {:.2f}, stopping due to mag limit but continueing.'.format(len(reference_catalogue), i*0.2))
-                break
-        
+    ###############################################################
+    # Create the lambda matrix and iverted matrix
+    ###############################################################
+    RA_weight = 1.
+    Dec_weight = 1.
+    mag_weight = 1. 
+    lamb = np.matrix(np.diag([median_absolute_deviation(reference_catalogue['ra_deg'])/RA_weight,
+                    median_absolute_deviation(reference_catalogue['dec_deg'])/Dec_weight,
+                    median_absolute_deviation(reference_catalogue['Tmag'])/mag_weight]))
+    lamb_inv = np.linalg.inv(lamb)
 
     ###############################################################
-    # Finally, add target to top
+    # Now calcualte the Euclidean distances for each star
     ###############################################################
-    if args.tic_id in reference_catalogue['tic_id']:
-        # its in. Lets put it at the start
-        print('\tTarget made the cut')
-        idx_target = np.where(reference_catalogue['tic_id']==args.tic_id)[0][0]
-        reference_catalogue.remove_row(idx_target) # remove it so we can sort by delta T mag
-    else : print('\tTarget did not made the cut, adding it now')
-    reference_catalogue = reference_catalogue[np.argsort(np.abs(np.array(np.abs(reference_catalogue['Tmag']-Tmag))))]
-    reference_catalogue = vstack((Table(target_row), reference_catalogue)) # makes sure target is at top
+    distances = np.zeros(len(reference_catalogue))
+    for i in range(len(reference_catalogue)):
+        if np.isinf(reference_catalogue['ra_deg'][i]) or np.isnan(reference_catalogue['ra_deg'][i]) : distances[i] = np.inf
+        if np.isinf(reference_catalogue['dec_deg'][i]) or np.isnan(reference_catalogue['dec_deg'][i]) : distances[i] = np.inf
+        if np.isinf(reference_catalogue['Tmag'][i]) or np.isnan(reference_catalogue['Tmag'][i]) : distances[i] = np.inf
+
+        ra_diff = reference_catalogue['ra_deg'][i] - target_row['ra_deg'][0] 
+        dec_diff = reference_catalogue['dec_deg'][i] - target_row['dec_deg'][0] 
+        mag_diff = reference_catalogue['Tmag'][i] - target_row['Tmag'][0] 
+        diff = np.matrix([[ra_diff], [dec_diff], [mag_diff]])
+        distances[i] = np.sqrt(np.dot(np.dot(diff.T, lamb_inv), diff))
+
+    ####################################################################################
+    # Now get the arguments of the the smallest Euclidean distances and make the table #
+    ####################################################################################
+    photometry_table_indexes = np.argsort(distances)
+    photometry_table = reference_catalogue[photometry_table_indexes]
+
+    ####################################################################################
+    # Now construct the table and appropriate indexes                                  #
+    ####################################################################################
+    photometry_table_total = vstack((Table(target_row), FP_table, photometry_table)) # makes sure target is at top
+    photometry_table_total.add_column(Column(np.concatenate((np.array([0]),np.ones(len(FP_table)), 2*np.ones(len(photometry_table)))).astype(int), name = 'PAOPHOT_IDX'), index = 1)
+
+
+    ###############################################################
+    # Finally, add target to top and write out
+    ###############################################################
     outfile = '{:}/TIC-{:}.fits'.format(args.output_dir, args.tic_id)
     print('\tSaving target to {:}'.format(outfile) )
-    reference_catalogue.write(outfile, overwrite=True, format='fits')
-    exit()
+    photometry_table_total.write(outfile, overwrite=True, format='fits')
