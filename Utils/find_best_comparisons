@@ -2,7 +2,7 @@
 
 # Imports
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import argparse, os, sys
 from astropy.table import Table 
@@ -168,6 +168,9 @@ if __name__=="__main__":
 
     RMS_VALS = RMS_VALS[mask_col]
     tic_ids_mag = tic_ids_mag[mask_col]
-    plt.figure()
+
+    f = plt.figure()
     plt.scatter(tic_ids_mag,RMS_VALS, c='k' )
-    plt.show()
+    plt.xlabel('Tmag')
+    f.savefig('{:}/{:}_Comparison_star_RMS.png'.format(args.output_dir, flux_column_target.split('_')[0]), dpi=250)
+    plt.close()
