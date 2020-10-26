@@ -79,7 +79,7 @@ if __name__=='__main__':
     ###############################################################
     RA_weight = 1.
     Dec_weight = 1.
-    mag_weight = 1. 
+    mag_weight = 100. 
     lamb = np.matrix(np.diag([median_absolute_deviation(reference_catalogue['ra_deg'])/RA_weight,
                     median_absolute_deviation(reference_catalogue['dec_deg'])/Dec_weight,
                     median_absolute_deviation(reference_catalogue['Tmag'])/mag_weight]))
