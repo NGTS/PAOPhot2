@@ -67,7 +67,7 @@ if __name__=='__main__':
          (reference_catalogue['objType']=='STAR') &\
          (reference_catalogue['lumclass']=='DWARF') &\
          (reference_catalogue['Dilution_Tmag_AP3.0']< 0.1) &\
-         (x > 400) & (x < 1600) & (y > 400) & (y < 1600) &\
+         (x > 200) & (x < 1800) & (y > 200) & (y < 1800) &\
          ( np.abs( (reference_catalogue['gaiabp'] - reference_catalogue['gaiarp']) - BPRP)< 1)
 
     print('\tInitial masking bad comparison targets from {:,} to {:,}'.format(len(reference_catalogue), len(reference_catalogue[reference_catalogue_mask])))
@@ -77,11 +77,12 @@ if __name__=='__main__':
     ###############################################################
     # Create the lambda matrix and iverted matrix
     ###############################################################
-    RA_weight = 1.
-    Dec_weight = 1.
-    mag_weight = 100. 
-    lamb = np.matrix(np.diag([median_absolute_deviation(reference_catalogue['ra_deg'])/RA_weight,
-                    median_absolute_deviation(reference_catalogue['dec_deg'])/Dec_weight,
+    x, y = frame_wcs.all_world2pix(reference_catalogue['ra_deg'],reference_catalogue['dec_deg'],0)
+    x_weight = 1.
+    y_weight = 1.
+    mag_weight = 100
+    lamb = np.matrix(np.diag([median_absolute_deviation(x)/x_weight,
+                    median_absolute_deviation(y)/y_weight,
                     median_absolute_deviation(reference_catalogue['Tmag'])/mag_weight]))
     lamb_inv = np.linalg.inv(lamb)
 
@@ -90,14 +91,14 @@ if __name__=='__main__':
     ###############################################################
     distances = np.zeros(len(reference_catalogue))
     for i in range(len(reference_catalogue)):
-        if np.isinf(reference_catalogue['ra_deg'][i]) or np.isnan(reference_catalogue['ra_deg'][i]) : distances[i] = np.inf
-        if np.isinf(reference_catalogue['dec_deg'][i]) or np.isnan(reference_catalogue['dec_deg'][i]) : distances[i] = np.inf
+        if np.isinf(x[i]) or np.isnan(x[i]) : distances[i] = np.inf
+        if np.isinf(y[i]) or np.isnan(y[i]) : distances[i] = np.inf
         if np.isinf(reference_catalogue['Tmag'][i]) or np.isnan(reference_catalogue['Tmag'][i]) : distances[i] = np.inf
 
-        ra_diff = reference_catalogue['ra_deg'][i] - target_row['ra_deg'][0] 
-        dec_diff = reference_catalogue['dec_deg'][i] - target_row['dec_deg'][0] 
+        x_diff = x[i] - xtarget
+        y_diff = y[i] - ytarget
         mag_diff = reference_catalogue['Tmag'][i] - target_row['Tmag'][0] 
-        diff = np.matrix([[ra_diff], [dec_diff], [mag_diff]])
+        diff = np.matrix([[x_diff], [y_diff], [mag_diff]])
         distances[i] = np.sqrt(np.dot(np.dot(diff.T, lamb_inv), diff))
 
     ####################################################################################
@@ -111,7 +112,12 @@ if __name__=='__main__':
     ####################################################################################
     photometry_table_total = vstack((Table(target_row), FP_table, photometry_table)) # makes sure target is at top
     photometry_table_total.add_column(Column(np.concatenate((np.array([0]),np.ones(len(FP_table)), 2*np.ones(len(photometry_table)))).astype(int), name = 'PAOPHOT_IDX'), index = 1)
+    photometry_table_total.add_column(Column(np.zeros(len(photometry_table_total)), name = 'ED'), index=2)
+    photometry_table_total['ED'][(1+len(FP_table)):] = distances[photometry_table_indexes]
+    photometry_table_total.add_column(Column(np.abs(photometry_table_total['Tmag'] - photometry_table_total['Tmag'][0]), name = 'DeltaMag'), index=3)
 
+    photometry_table_total.add_column(Column(np.zeros(len(photometry_table_total)), name = 'Deltapix'), index=4)
+    photometry_table_total['Deltapix'][(1+len(FP_table)):] = np.hypot(x[photometry_table_indexes] - xtarget, y[photometry_table_indexes]-ytarget)
 
     ###############################################################
     # Finally, add target to top and write out
