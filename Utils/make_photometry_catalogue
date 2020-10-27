@@ -78,9 +78,9 @@ if __name__=='__main__':
     # Create the lambda matrix and iverted matrix
     ###############################################################
     x, y = frame_wcs.all_world2pix(reference_catalogue['ra_deg'],reference_catalogue['dec_deg'],0)
-    x_weight = 1.
-    y_weight = 1.
-    mag_weight = 100
+    x_weight = 1e6
+    y_weight = 1e6
+    mag_weight = 1
     lamb = np.matrix(np.diag([median_absolute_deviation(x)/x_weight,
                     median_absolute_deviation(y)/y_weight,
                     median_absolute_deviation(reference_catalogue['Tmag'])/mag_weight]))
@@ -91,9 +91,9 @@ if __name__=='__main__':
     ###############################################################
     distances = np.zeros(len(reference_catalogue))
     for i in range(len(reference_catalogue)):
-        if np.isinf(x[i]) or np.isnan(x[i]) : distances[i] = np.inf
-        if np.isinf(y[i]) or np.isnan(y[i]) : distances[i] = np.inf
-        if np.isinf(reference_catalogue['Tmag'][i]) or np.isnan(reference_catalogue['Tmag'][i]) : distances[i] = np.inf
+        #if np.isinf(x[i]) or np.isnan(x[i]) : distances[i] = np.inf
+        #if np.isinf(y[i]) or np.isnan(y[i]) : distances[i] = np.inf
+        #if np.isinf(reference_catalogue['Tmag'][i]) or np.isnan(reference_catalogue['Tmag'][i]) : distances[i] = np.inf
 
         x_diff = x[i] - xtarget
         y_diff = y[i] - ytarget
@@ -101,10 +101,13 @@ if __name__=='__main__':
         diff = np.matrix([[x_diff], [y_diff], [mag_diff]])
         distances[i] = np.sqrt(np.dot(np.dot(diff.T, lamb_inv), diff))
 
+    # SG hack 
+    distances = 500*np.abs(reference_catalogue['Tmag'] - target_row['Tmag'][0])  + np.hypot(x - xtarget, y - ytarget)
+    
     ####################################################################################
     # Now get the arguments of the the smallest Euclidean distances and make the table #
     ####################################################################################
-    photometry_table_indexes = np.argsort(distances[:100])
+    photometry_table_indexes = np.argsort(distances)[:100]
     photometry_table = reference_catalogue[photometry_table_indexes]
 
     ####################################################################################

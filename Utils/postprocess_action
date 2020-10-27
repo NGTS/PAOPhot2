@@ -2,7 +2,7 @@
 
 # Imports
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import argparse, os, sys
 from astropy.table import Table 
@@ -63,49 +63,44 @@ if __name__=="__main__":
     # Now load the photoemtry file and create the corrosponding mask if made
     photometry_file = Table.read(args.photometry_file, format='csv')
     photometery_catalogue = Table.read(args.photometery_catalogue)
-    if args.photometery_catalogue_mask=='None' : 
-        print('\tUsing all comparison stars.')
-        photometery_catalogue_mask = np.ones(len(photometery_catalogue), dtype = np.bool)
-    else : 
-        photometery_catalogue_mask = np.array(Table.read(args.photometery_catalogue_mask)['MASK'])
-        print('\tMasking {:,} comparison stars out of {:,} stars'.format(np.where(photometery_catalogue_mask==False)[0].shape[0], photometery_catalogue_mask.shape[0]))
 
-    # Get a list of TIC IDs
-    #_, ind = np.unique([i.split('_')[0] for i in photometry_file.colnames[6:] ], return_index=True)
-    #tics = [i.split('_')[0] for i in np.array(photometry_file.colnames[6:])[np.argsort(ind)] ]
-    #
+    # Now get the target and the comparisons 
+    target_row = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==0]
+    comparison_table = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==2][Table.read(args.photometery_catalogue_mask)['MASK']]
 
-    flux_columns = []
-    for name in photometry_file.colnames : 
-        if ('_Aper_flux_3' in name) and not ('_Aper_flux_3_err' in name) : flux_columns.append(name)
-    flux_column_target = flux_columns[0]  # keep the target
-    tic_id_target = flux_column_target.split('_')[0]
-    flux_columns = np.array(flux_columns[1:])       # remove the target so we can look only at comparison stars
-    tics = np.array([i.split('_')[0] for i in flux_columns])
-    print('\tTarget = {:}'.format(tic_id_target))
+    # Now lets get the flux
+    print('Extracting target and comparison fluxes')
+    target_flux = np.array(photometry_file['TIC-{:}_Aper_flux_3'.format(target_row['tic_id'][0])])
+    target_flux_err = np.array(photometry_file['TIC-{:}_Aper_flux_3_err'.format(target_row['tic_id'][0])])
 
-    # Now purge the bad comparisons 
-    #tics = np.delete(tics, np.where(tics==tic_id_target)) # get rid of the target
-    #tics = tics[1:]
-    print('\tTarget = {:}'.format(tic_id_target))
-    flux_columns = np.delete(flux_columns, np.where(photometery_catalogue_mask==False)) # get rid of the target
+    comparison_flux = np.zeros(len(photometry_file))
+    comparison_flux_err = np.zeros(len(photometry_file))
 
-    # First, get the target flux 
-    target_flux = np.array(photometry_file[flux_column_target])
-    target_flux_err = np.array(photometry_file[flux_column_target + '_err'])
-
-    # Now get the comp flux and errors
-    comp_flux = np.zeros(target_flux.shape[0])
-    comp_flux_err = np.zeros(target_flux.shape[0])
-    for i in range(flux_columns.shape[0])[:] : 
-        comp_flux = comp_flux + np.array(photometry_file[flux_columns[i]])
-        comp_flux_err = comp_flux_err + np.array(photometry_file[flux_columns[i] + '_err'])**2
-    comp_flux_err = np.sqrt(comp_flux_err)
+    for i in range(len(comparison_table)) : 
+        comparison_flux = comparison_flux + photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])]
+        comparison_flux_err = comparison_flux_err + photometry_file['TIC-{:}_Aper_flux_3_err'.format(comparison_table['tic_id'][i])]**2
+    comparison_flux_err = np.sqrt(comparison_flux_err)
 
 
     # Work out the detrended flux and errors
-    detrended_flux =  target_flux/comp_flux
-    detrended_flux_err =  target_flux_err /comp_flux # np.sqrt(detrended_flux**2*((comp_flux_err**2) /  (comp_flux)**2))
+    detrended_flux =  target_flux/comparison_flux
+    detrended_flux_err =  target_flux_err / comparison_flux  # np.sqrt(detrended_flux**2*((comp_flux_err**2) /  (comp_flux)**2))
+
+    t_bin, f_bin, f_bin_err = lc_bin(np.array(photometry_file['JD']), detrended_flux, 0.5/24/6)
+    rms_5 = int(1e6*np.std(f_bin))
+
+    # establish time offset and other metrics
+    time_offset = int(np.min(np.array(photometry_file['JD'])))
+    rms = int(1e6*np.std(detrended_flux))
+    
+    # Now create the figure
+    f = plt.figure()
+    plt.errorbar(np.array(photometry_file['JD'])-time_offset, detrended_flux, yerr=detrended_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.3)
+    plt.errorbar(t_bin-time_offset, f_bin, yerr=f_bin_err, markersize=3, fmt='k.', ecolor='k', alpha = 1)
+    plt.show()
+
+    exit()
+
 
     # Now this needs saveing, raw flux which can be compared 
     # Finally, create the 

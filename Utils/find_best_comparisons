@@ -2,7 +2,7 @@
 
 # Imports
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import argparse, os, sys
 from astropy.table import Table 
@@ -49,74 +49,81 @@ if __name__=="__main__":
     photometry_file = Table.read(args.photometry_file, format='csv')
     photometery_catalogue = Table.read(args.photometery_catalogue)
 
-    flux_columns = []
-    for name in photometry_file.colnames : 
-        if ('_Aper_flux_3' in name) and not ('_Aper_flux_3_err' in name) : flux_columns.append(name)
-    flux_column_target = flux_columns[0]  # keep the target
-    flux_columns = np.array(flux_columns[1:])       # remove the target so we can look only at comparison stars
-    tic_ids = np.array([i.split('_')[0] for i in flux_columns])
-    tic_ids_int = np.array([int(i.split('-')[1]) for i in tic_ids])
-    tic_ids_mag = np.array([photometery_catalogue['Tmag'][np.where(photometery_catalogue['tic_id']==i)][0] for i in tic_ids_int])
+    # Now get the target information and comparison information
+    target_row = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==0]
+    comparison_table = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==2] 
+    negative_flux_comp_mask = np.zeros(len(comparison_table), dtype = np.bool)
+    for i in range(len(comparison_table)):
+        if np.median( photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])] ) < 0 : negative_flux_comp_mask[i] = True
+    tic_ids = np.array(['TIC-{:}'.format(i) for i in comparison_table['tic_id']]) 
 
+    # Now lets get the flux columns
+    print('Extracting target and comparison fluxes')
+    target_flux = np.array(photometry_file['TIC-{:}_Aper_flux_3'.format(target_row['tic_id'][0])])
+    comparison_flux = np.zeros((len(comparison_table) , len(photometry_file)))
+    for i in range(len(comparison_table)) : comparison_flux[i]  = photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])]
+    x = np.arange(comparison_flux.shape[0]) # indexes of each comparison star
+
+    print('Calcualting raw flux standard deviations for each comparison')
     # Now calcualte the STD / MEDIAN for each comparison star
-    STD_MEDIAN = np.zeros(flux_columns.shape[0])
-    RMS_VALS = np.zeros(flux_columns.shape[0])
-
-    for i in range(len(flux_columns)) : 
-        STD_MEDIAN[i] = np.std(photometry_file[flux_columns[i]]) / np.median(photometry_file[flux_columns[i]])
-        RMS_VALS[i] = np.std(photometry_file[flux_columns[i]]) / np.mean(photometry_file[flux_columns[i]])
-    STD_MEDIAN_to_clip = np.copy(STD_MEDIAN)
+    STD_MEDIAN_RAW = np.zeros(comparison_flux.shape[0])
+    for i in range(comparison_flux.shape[0]) : STD_MEDIAN_RAW[i] = np.std(comparison_flux[i]) / np.median(comparison_flux[i])
+    STD_MEDIAN_to_clip = np.copy(STD_MEDIAN_RAW)
 
     # Now iteratavily reject comparison stars
     n_reject, i = 1e6 , 1
-    print('Iterating the RAW flux of each comparison to reject outliers...')
     while n_reject > 0:
         med_noise = np.median(STD_MEDIAN_to_clip)
         mad_noise = np.median(np.abs(STD_MEDIAN_to_clip-med_noise))
         mask_sig = np.where((STD_MEDIAN_to_clip < med_noise + 4*mad_noise))[0]
         n_reject = len(STD_MEDIAN_to_clip) - len(mask_sig)
         STD_MEDIAN_to_clip = np.copy(STD_MEDIAN_to_clip[mask_sig]) 
-        print('\tIteration {:<2,} rejected {:<3,} comparisons out of {:<3,}'.format(i, n_reject, STD_MEDIAN.shape[0]))
+        print('\tIteration {:<2,} rejected {:<3,} comparisons out of {:<3,}'.format(i, n_reject, STD_MEDIAN_RAW.shape[0]))
         i+=1
-    #mask = np.where(STD_MEDIAN > med_noise + 4*mad_noise)[0]
-    mask_rawflux =(STD_MEDIAN > (med_noise + 4*mad_noise))
+    mask_rawflux =(STD_MEDIAN_RAW > (med_noise + 4*mad_noise)) | (STD_MEDIAN_RAW < 0)  # need to chec kif flux is zero for some reason, look at this!!!!
 
-
-    # SG TEST
-    STD_MEDIANS = np.zeros((flux_columns[~mask_rawflux].shape[0], flux_columns[~mask_rawflux].shape[0]))
-    for i in range(STD_MEDIANS.shape[0]):
-        for j in range(STD_MEDIANS.shape[1]):
+    print('Calcualting comparison flux standard deviations for each comparison')
+    STD_MEDIANS_COMP = np.zeros((comparison_flux.shape[0], comparison_flux.shape[0]))
+    for i in range(comparison_flux.shape[0]):
+        for j in range(comparison_flux.shape[0]):
             if (i!=j):
-                FLUX_RATIO = photometry_file[flux_columns[~mask_rawflux][i]] / photometry_file[flux_columns[~mask_rawflux][j]]
-                STD_MEDIANS[i,j] =  np.std(FLUX_RATIO) / np.median(FLUX_RATIO)
+                FLUX_RATIO = comparison_flux[i] / comparison_flux[j]
+                STD_MEDIANS_COMP[i,j] =  np.std(FLUX_RATIO) / np.median(FLUX_RATIO)
 
+    XX, YY = np.meshgrid(x, x)
+    STD_MEDIANS_COMP_plot = np.copy(STD_MEDIANS_COMP)
+    STD_MEDIANS_COMP_plot[x[mask_rawflux | negative_flux_comp_mask], :] = 0.
+    STD_MEDIANS_COMP_plot[:, x[mask_rawflux | negative_flux_comp_mask]] = 0.
 
-    x = np.arange(STD_MEDIANS.shape[0])
-    signal = np.sum(STD_MEDIANS, axis=0)
-    trend =  median_filter(np.sum(STD_MEDIANS, axis=0),5)
-    trend = np.poly1d(np.polyfit(x,trend,2))(x)
+    xcomp = np.arange(comparison_flux.shape[0])[~(mask_rawflux | negative_flux_comp_mask)] # indexes of each comparison star
+    signal = (np.mean(STD_MEDIANS_COMP_plot, axis=0)[~(mask_rawflux | negative_flux_comp_mask)] + np.mean(STD_MEDIANS_COMP_plot, axis=1)[~(mask_rawflux | negative_flux_comp_mask)] )/2
+    trend =  median_filter(signal,5)
+    trend = np.poly1d(np.polyfit(xcomp,trend,2))(xcomp)
     detrended_signal = signal /trend
 
+    # Now iteratavily reject comparison stars
     STD_MEDIAN_to_clip = np.copy(detrended_signal)
     n_reject, i = 1e6 , 1
-    print('Iterating the comparitive flux of each comparison to reject outliers...')
     while n_reject > 0:
         med_noise = np.median(STD_MEDIAN_to_clip)
         mad_noise = np.median(np.abs(STD_MEDIAN_to_clip-med_noise))
-        mask_sig = np.where((STD_MEDIAN_to_clip < med_noise + 5*mad_noise))[0]
+        mask_sig = np.where((STD_MEDIAN_to_clip < med_noise + 4*mad_noise))[0]
         n_reject = len(STD_MEDIAN_to_clip) - len(mask_sig)
         STD_MEDIAN_to_clip = np.copy(STD_MEDIAN_to_clip[mask_sig]) 
-        print('\tIteration {:<2,} rejected {:<3,} comparisons out of {:<3,} remaining comparisons'.format(i, n_reject, detrended_signal.shape[0]))
+        print('\tIteration {:<2,} rejected {:<3,} comparisons out of {:<3,}'.format(i, n_reject, detrended_signal.shape[0]))
         i+=1
-    mask2 =(detrended_signal > (med_noise + 5*mad_noise))
-
-    # Now convert mask 2 to a full mask
-    mask_compfluxratio = np.ones(len(tic_ids), dtype = np.bool)
+    mask_compflux =(detrended_signal > (med_noise + 4*mad_noise))
+    mask_compfluxratio = np.zeros(comparison_flux.shape[0], dtype = np.bool)
     counter = 0
     for i in range(mask_compfluxratio.shape[0]):
         if (not mask_rawflux[i]):
-            if (mask2[counter]) : mask_compfluxratio[i] = False
+            if (mask_compflux[counter]) : mask_compfluxratio[i] = True
             counter += 1
+
+        
+
+
+    # Now we have two masks ready to use, mask_rawflux and mask_compfluxratio
 
     f = plt.figure(constrained_layout=True, figsize=(15,10))
     spec2 = gridspec.GridSpec(ncols=2, nrows=2, figure=f)
@@ -125,52 +132,40 @@ if __name__=="__main__":
     axs.append(f.add_subplot(spec2[1, 0]))
     axs.append(f.add_subplot(spec2[1, 1]))
 
-
-    axs[1].imshow(STD_MEDIANS, vmin = 0.0, vmax = 2*np.median(STD_MEDIANS[STD_MEDIANS>0]))
-    axs[1].set(xlabel='Comparison star\n[<-- RANK]', ylabel='Comparison star\n[<-- RANK]', title='Comparison star ratio rejection')
-    axs[1].set_xticks(x)
-    axs[1].set_xticklabels(tic_ids[~mask_rawflux], rotation = 60, fontsize=2, ha="right")
-    axs[1].set_yticks(x)
-    axs[1].set_yticklabels(tic_ids[~mask_rawflux], rotation = 60, fontsize=2, ha="right")
-
-    axs[2].plot(x, np.sum(STD_MEDIANS, axis=0), c='k')
-    axs[2].plot(x, trend, c='r', label='Trend')
-    axs[2].set(xlabel='Comparison star\n[<-- RANK]', ylabel=r'$\sum \sigma_{F}$ / $\widetilde{F}$', title='Target : {:}'.format(flux_column_target.split('_')[0]))
-    axs[2].set_xticks(x)
-    axs[2].set_xticklabels(tic_ids[~mask_rawflux], rotation = 60, fontsize=2, ha="right")
-    #axs[2].scatter(x[mask2], signal[mask2], c='r', s = 10)
-    #axs[2].vlines(x[mask2], ymin = axs[2].get_ylim()[0], ymax = trend[mask2], color='r', label='Rejected stars due to high raw flux variation')
-    for i in range(x[mask2].shape[0]):
-        axs[2].annotate('', xy=(x[mask2][i], np.sum(STD_MEDIANS, axis=0)[mask2][i]), xytext=(0, 25), textcoords='offset points', arrowprops=dict(arrowstyle="-|>", color='orange'))
-
-
-    axs[2].legend() 
-
-    # Now plot which ones have been rejected
-    x = np.arange(len(STD_MEDIAN))
-    axs[0].vlines(x, ymin = np.zeros(x.shape[0]), ymax = STD_MEDIAN, color='k', label='Accepted stars')
-    axs[0].vlines(x[mask_rawflux], ymin = np.zeros(x.shape[0])[mask_rawflux], ymax = STD_MEDIAN[mask_rawflux], color='r', label='Rejected stars due to high raw flux variation')
-    axs[0].vlines(x[~mask_rawflux & ~mask_compfluxratio], ymin = np.zeros(x.shape[0])[~mask_rawflux & ~mask_compfluxratio], ymax = STD_MEDIAN[~mask_rawflux & ~mask_compfluxratio], color='orange', label='Rejected stars due to high detrended flux variations')
-    axs[0].set(ylabel=r'$\sum \sigma_{F}$ / $\widetilde{F}$', title='Comparison star rejection\nTarget : {:}\nPhotfile : {:}'.format(flux_column_target.split('_')[0], args.photometry_file), ylim = (0, None))
+    axs[0].semilogy(x[~negative_flux_comp_mask], STD_MEDIAN_RAW[~negative_flux_comp_mask], c='k')
+    twinx = axs[0].twinx()
+    twinx.semilogy(x[~(negative_flux_comp_mask | mask_rawflux)], (np.sum(STD_MEDIANS_COMP_plot, axis=0) + np.sum(STD_MEDIANS_COMP_plot, axis=1))[~(negative_flux_comp_mask | mask_rawflux)],  c='g')
+    axs[0].set(ylim = (0,None), xlabel='Comparison star\n[<-- RANK]', ylabel=r'$\sum \sigma_{F}$ / $\widetilde{F}$')
+    axs[0].vlines(x[negative_flux_comp_mask | mask_rawflux | mask_compfluxratio], ymin = np.zeros(x.shape[0])[negative_flux_comp_mask | mask_rawflux | mask_compfluxratio], ymax = STD_MEDIAN_RAW[negative_flux_comp_mask | mask_rawflux | mask_compfluxratio], color='r', label='Rejected stars due to high raw flux variation')
     axs[0].set_xticks(x)
     axs[0].set_xticklabels(tic_ids, rotation = 60, fontsize=4, ha="right")
     plt.legend()
 
-    f.savefig('{:}/{:}_Comparison_star_rejection.png'.format(args.output_dir, flux_column_target.split('_')[0]), dpi=250)
+    axs[1].imshow(STD_MEDIANS_COMP_plot, vmin = 0.0, vmax = np.max(STD_MEDIANS_COMP_plot), aspect='auto')
+    axs[1].set(xlabel='Comparison star\n[<-- RANK]', ylabel='Comparison star\n[<-- RANK]', title='Comparison star ratio rejection')
+    axs[1].set_xticks(x)
+    axs[1].set_xticklabels(tic_ids, rotation = 60, fontsize=2, ha="right")
+    axs[1].set_yticks(x)
+    axs[1].set_yticklabels(tic_ids, rotation = 60, fontsize=2, ha="right")
+
+    axs[2].scatter(xcomp, signal, c='k')
+    axs[2].scatter(xcomp[mask_compflux], signal[mask_compflux], c='r')
+    axs[2].plot(xcomp, trend, c='r', label='Trend')
+    axs[2].set(xlabel='Comparison star\n[<-- RANK]', ylabel=r'$\sum \sigma_{F}$ / $\widetilde{F}$', title='Target : TIC-{:}'.format(target_row['tic_id'][0]))
+    axs[2].set_xticks(xcomp)
+    axs[2].set_xticklabels(tic_ids[~mask_rawflux], rotation = 30, fontsize=5, ha="right")
+
+    f.savefig('{:}/TIC-{:}_Comparison_star_rejection.png'.format(args.output_dir, target_row['tic_id'][0]), dpi=250)
     plt.close()
 
+    
     # now write it out for photmerge
-    mask_col = np.ones(x.shape[0], dtype = np.bool)
-    mask_col[mask_rawflux | ~mask_compfluxratio] = 0
-    mask_table = Table([mask_col], names = ['MASK'])
+    mask_table = Table([~(negative_flux_comp_mask | mask_rawflux | mask_compfluxratio)], names = ['MASK'])
     mask_table.write('{:}/{:}_mask.fits'.format(args.output_dir, args.photometery_catalogue.split('/')[-1][:-5]), format='fits', overwrite=True)
 
-
-    RMS_VALS = RMS_VALS[mask_col]
-    tic_ids_mag = tic_ids_mag[mask_col]
-
     f = plt.figure()
-    plt.scatter(tic_ids_mag,RMS_VALS, c='k' )
+    plt.scatter(comparison_table['Tmag'][~(negative_flux_comp_mask | mask_rawflux | mask_compfluxratio)],STD_MEDIAN_RAW[~(negative_flux_comp_mask | mask_rawflux | mask_compfluxratio)], c='k' )
     plt.xlabel('Tmag')
-    f.savefig('{:}/{:}_Comparison_star_RMS.png'.format(args.output_dir, flux_column_target.split('_')[0]), dpi=250)
-    plt.close()
+    plt.ylabel(r'$\sigma_{F}$ / $\widetilde{F}$')
+    f.savefig('{:}/{:}_Comparison_star_RMS.png'.format(args.output_dir, target_row['tic_id'][0]), dpi=250)
+    plt.show()
