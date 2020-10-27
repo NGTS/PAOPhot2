@@ -2,7 +2,7 @@
 
 # Imports
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import argparse, os, sys
 from astropy.table import Table 
@@ -97,7 +97,7 @@ if __name__=="__main__":
     f = plt.figure()
     plt.errorbar(np.array(photometry_file['JD'])-time_offset, detrended_flux, yerr=detrended_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.3)
     plt.errorbar(t_bin-time_offset, f_bin, yerr=f_bin_err, markersize=3, fmt='k.', ecolor='k', alpha = 1)
-    plt.show()
+    #plt.show()
 
     exit()
 
