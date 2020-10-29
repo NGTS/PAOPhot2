@@ -172,3 +172,4 @@ if __name__=="__main__":
     plt.xlabel('Tmag')
     plt.ylabel(r'$\sigma_{F}$ / $\widetilde{F}$')
     f.savefig('{:}/{:}_Comparison_star_RMS.png'.format(args.output_dir, target_row['tic_id'][0]), dpi=250)
+    plt.close()
