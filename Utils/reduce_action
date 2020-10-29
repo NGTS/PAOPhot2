@@ -79,7 +79,7 @@ def photometry_worker(i):
                                                                                             output_directory)
     print(cmd) 
     #os.system(cmd)
-    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400)
+    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=60)
 
     # Now compress this 
     cmd = 'gzip -fv {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
@@ -127,7 +127,7 @@ if __name__=="__main__":
                                                                                    solved_autoguider_catalogue_location )
         print(cmd)
         #os.system(cmd) 
-        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400)
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=14400) # 4hr timeout
 
         # Check the catalogue has been made
         if not os.path.isfile(solved_autoguider_catalogue_location) : 
@@ -144,7 +144,7 @@ if __name__=="__main__":
                                                                                         args.astr_net_tmp)
         print(cmd)
         #os.system(cmd) 
-        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400)
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1hr timeout
         # Finally, we need to estimate what the dilution is for each target in the frame using NGTSDilution
         cmd = '/usr/local/anaconda3/bin/python {:}/ngtsdilution.py {:} {:} --output_dir {:} --threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
                                                                         solved_autoguider_image_location,
@@ -154,7 +154,7 @@ if __name__=="__main__":
                                                                         '{:}/NGTS_PRF/NG0029-3024_813_IMAGE81320191012010055_cat.npy'.format(PAOPhot_paths['NGTSDilution_path']))
         print(cmd)
         #os.system(cmd) 
-        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400)
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400) # 9 hr timeout
 
         # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
         # Lets check
@@ -186,7 +186,7 @@ if __name__=="__main__":
                 print('Not found {:}, making it.'.format(photometry_catalogue))
                 cmd = '/usr/local/anaconda3/bin/make_photometry_catalogue {:} {:} {:} --output_dir {:}/target_catalogues'.format(solved_autoguider_catalogue_location , solved_autoguider_image_location, args.target_ticid, PAOPhot_paths['PAOPhot2_data_path'] )
                 #os.system(cmd)
-                errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400)
+                errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1 hr timeout
             else:
                 print('Found {:}'.format(photometry_catalogue))
         else : photometry_catalogue = solved_autoguider_catalogue_location
@@ -201,7 +201,7 @@ if __name__=="__main__":
     # Create the output directory 
     output_directory = '{:}/photometry/action{:}'.format(PAOPhot_paths['PAOPhot2_data_path'], args.action)
     #os.system('mkdir -p {:}'.format(output_directory))
-    errcode = subprocess.call('mkdir -p {:}'.format(output_directory), shell=True, stderr=subprocess.STDOUT, timeout=32400)
+    errcode = subprocess.call('mkdir -p {:}'.format(output_directory), shell=True, stderr=subprocess.STDOUT, timeout=5)
 
     # loop over the images, running WCSPhot for each 
     for i in range(len(images_information))[:] : photometry_worker(i)
@@ -283,7 +283,7 @@ if __name__=="__main__":
         cmd = '/usr/local/anaconda3/bin/find_best_comparisons {:} {:} --output_dir {:}'.format(photometry_catalogue , total_table_name, '/ngts/staging/archive/PAOPhot2/target_catalogues')
         print('\t\t{:}'.format(cmd))
         #os.system(cmd)
-        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400)
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1 hr timeout
 
 
     # Now post-process action to plot etc. 
@@ -291,5 +291,5 @@ if __name__=="__main__":
     cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --output_dir {:}  --fieldcam {:}'.format(photometry_catalogue , total_table_name ,  photometry_catalogue_mask , output_directory , '{:}_{:}'.format( action_info['field'], action_info['camera_id']))
     print('\t\t' + cmd)
     #os.system(cmd)
-    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400)
+    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1hr timeout
     print('Finished.')
