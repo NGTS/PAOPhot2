@@ -121,6 +121,8 @@ if __name__=='__main__':
 
     photometry_table_total.add_column(Column(np.zeros(len(photometry_table_total)), name = 'Deltapix'), index=4)
     photometry_table_total['Deltapix'][(1+len(FP_table)):] = np.hypot(x[photometry_table_indexes] - xtarget, y[photometry_table_indexes]-ytarget)
+    x, y = frame_wcs.all_world2pix(FP_table['ra_deg'],FP_table['dec_deg'],0)
+    photometry_table_total['Deltapix'][1:(len(FP_table)+1)] = np.hypot(x - xtarget, y-ytarget)
 
     ###############################################################
     # Finally, add target to top and write out

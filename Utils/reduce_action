@@ -4,7 +4,7 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
+import subprocess
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
 #from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
@@ -78,7 +78,8 @@ def photometry_worker(i):
                                                                                             photometry_catalogue,
                                                                                             output_directory)
     print(cmd) 
-    os.system(cmd)
+    #os.system(cmd)
+    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
 
     # Now compress this 
     cmd = 'gzip -fv {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
@@ -125,7 +126,8 @@ if __name__=="__main__":
                                                                                    autoguider_obstart , 
                                                                                    solved_autoguider_catalogue_location )
         print(cmd)
-        os.system(cmd) 
+        #os.system(cmd) 
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
 
         # Check the catalogue has been made
         if not os.path.isfile(solved_autoguider_catalogue_location) : 
@@ -141,8 +143,8 @@ if __name__=="__main__":
                                                                                         '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']),
                                                                                         args.astr_net_tmp)
         print(cmd)
-        os.system(cmd) 
-
+        #os.system(cmd) 
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
         # Finally, we need to estimate what the dilution is for each target in the frame using NGTSDilution
         cmd = '/usr/local/anaconda3/bin/python {:}/ngtsdilution.py {:} {:} --output_dir {:} --threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
                                                                         solved_autoguider_image_location,
@@ -151,8 +153,8 @@ if __name__=="__main__":
                                                                         args.threads,
                                                                         '{:}/NGTS_PRF/NG0029-3024_813_IMAGE81320191012010055_cat.npy'.format(PAOPhot_paths['NGTSDilution_path']))
         print(cmd)
-        os.system(cmd) 
-
+        #os.system(cmd) 
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
 
         # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
         # Lets check
@@ -183,7 +185,8 @@ if __name__=="__main__":
             if not os.path.isfile(photometry_catalogue) : 
                 print('Not found {:}, making it.'.format(photometry_catalogue))
                 cmd = '/usr/local/anaconda3/bin/make_photometry_catalogue {:} {:} {:} --output_dir {:}/target_catalogues'.format(solved_autoguider_catalogue_location , solved_autoguider_image_location, args.target_ticid, PAOPhot_paths['PAOPhot2_data_path'] )
-                os.system(cmd)
+                #os.system(cmd)
+                errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
             else:
                 print('Found {:}'.format(photometry_catalogue))
         else : photometry_catalogue = solved_autoguider_catalogue_location
@@ -197,7 +200,8 @@ if __name__=="__main__":
 
     # Create the output directory 
     output_directory = '{:}/photometry/action{:}'.format(PAOPhot_paths['PAOPhot2_data_path'], args.action)
-    os.system('mkdir -p {:}'.format(output_directory))
+    #os.system('mkdir -p {:}'.format(output_directory))
+    errcode = subprocess.call('mkdir -p {:}'.format(output_directory), shell=True, stderr=subprocess.STDOUT)
 
     # loop over the images, running WCSPhot for each 
     for i in range(len(images_information))[:] : photometry_worker(i)
@@ -278,12 +282,14 @@ if __name__=="__main__":
         print('\t\tMask not found, making it')
         cmd = '/usr/local/anaconda3/bin/find_best_comparisons {:} {:} --output_dir {:}'.format(photometry_catalogue , total_table_name, '/ngts/staging/archive/PAOPhot2/target_catalogues')
         print('\t\t{:}'.format(cmd))
-        os.system(cmd)
+        #os.system(cmd)
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
 
 
     # Now post-process action to plot etc. 
     print('\t\tNow making plots')
     cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --output_dir {:}  --fieldcam {:}'.format(photometry_catalogue , total_table_name ,  photometry_catalogue_mask , output_directory , '{:}_{:}'.format( action_info['field'], action_info['camera_id']))
     print('\t\t' + cmd)
-    os.system(cmd)
+    #os.system(cmd)
+    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT)
     print('Finished.')

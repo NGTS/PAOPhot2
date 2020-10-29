@@ -4,6 +4,8 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
 import argparse, os, sys
 from astropy.table import Table 
 import numpy as np 
@@ -66,6 +68,7 @@ if __name__=="__main__":
 
     # Now get the target and the comparisons 
     target_row = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==0]
+    FP_table = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==1]
     comparison_table = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==2][Table.read(args.photometery_catalogue_mask)['MASK']]
 
     # Now lets get the flux
@@ -86,73 +89,249 @@ if __name__=="__main__":
     detrended_flux =  target_flux/comparison_flux
     detrended_flux_err =  target_flux_err / comparison_flux  # np.sqrt(detrended_flux**2*((comp_flux_err**2) /  (comp_flux)**2))
 
+    # Now bin the photometry to 5 minutes
     t_bin, f_bin, f_bin_err = lc_bin(np.array(photometry_file['JD']), detrended_flux, 0.5/24/6)
     rms_5 = int(1e6*np.std(f_bin))
 
     # establish time offset and other metrics
-    time_offset = int(np.min(np.array(photometry_file['JD'])))
     rms = int(1e6*np.std(detrended_flux))
-    
-    # Now create the figure
-    f = plt.figure()
-    plt.errorbar(np.array(photometry_file['JD'])-time_offset, detrended_flux, yerr=detrended_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.3)
-    plt.errorbar(t_bin-time_offset, f_bin, yerr=f_bin_err, markersize=3, fmt='k.', ecolor='k', alpha = 1)
-    #plt.show()
-
-    exit()
-
-
-    # Now this needs saveing, raw flux which can be compared 
-    # Finally, create the 
-    tmp = np.array([np.array(photometry_file['JD']), detrended_flux, detrended_flux_err,]).T
-    np.savetxt('{:}/{:}_{:}_{:}_FLUX.dat'.format(args.output_dir, tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
-    #np.savetxt('{:}/{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
-
-    # Now bin the data
-    t_bin, f_bin, f_bin_err = lc_bin(np.array(photometry_file['JD']), detrended_flux, 0.5/24/6)
+    time = np.array(photometry_file['JD'])
+    time_offset = int(np.min(time))
 
     # Now sigma clip the binned data to exclude nasty outliers
     f_bin_filtered = sigma_clip(f_bin)
-    depth = np.max(f_bin_filtered) - np.min(f_bin_filtered)
+    depth_raw = np.max(f_bin_filtered) - np.min(f_bin_filtered)
 
     # Now work out a normalisation constant
     Nquarter = int(0.25*f_bin_filtered.shape[0])
     norm_constant = np.max([ np.median(f_bin_filtered[:Nquarter]), np.median(f_bin_filtered[Nquarter:2*Nquarter]) , np.median(f_bin_filtered[2*Nquarter:3*Nquarter]) ,  np.median(f_bin_filtered[-Nquarter:])  ])
-    detrended_flux = detrended_flux / norm_constant
-    detrended_flux_err = detrended_flux_err/norm_constant
-    depth = depth / norm_constant 
-    f_bin = f_bin / norm_constant 
-    f_bin_err = f_bin_err / norm_constant 
+    normlaised_flux = detrended_flux / norm_constant
+    normlaised_flux_err = detrended_flux_err / norm_constant
+    f_bin_normalised = f_bin / norm_constant
+    f_bin_err_normlaised = f_bin_err / norm_constant
+    depth_normalised= np.max(f_bin_filtered/ norm_constant) - np.min(f_bin_filtered/ norm_constant)
 
-    # establish time offset and other metrics
-    time_offset = int(np.min(np.array(photometry_file['JD'])))
-    rms = int(1e6*np.std(detrended_flux))
+    # Now save the raw flux in the action folder and in action lightcurves (used for photpack)
+    tmp = np.array([np.array(photometry_file['JD']), detrended_flux, detrended_flux_err,]).T
+    np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
+    #np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
+
+    # Finally, save the normalised lightcurve 
+    tmp = np.array([np.array(photometry_file['JD']),normlaised_flux, normlaised_flux_err]).T
+    np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX_NORMED.dat'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
+
+    #################################
+    #        Summary plot 1         #
+    #################################
+    nrows = 7
+    fig = plt.figure(constrained_layout=True,figsize =  (5, nrows*3))
+    spec2 = gridspec.GridSpec(ncols=1, nrows=nrows, figure=fig, )
+    ax_normlaised = fig.add_subplot(spec2[0])
+    ax_sky = fig.add_subplot(spec2[1])
+    ax_maxflux = fig.add_subplot(spec2[2])
+    ax_x = fig.add_subplot(spec2[3])
+    ax_y = fig.add_subplot(spec2[4])
+    ax_airmass = fig.add_subplot(spec2[5])
+    ax_temperature = fig.add_subplot(spec2[6])
+
+    ax_normlaised.errorbar(time-time_offset, normlaised_flux, yerr=normlaised_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+    ax_normlaised.errorbar(t_bin-time_offset, f_bin_normalised, yerr=f_bin_err_normlaised, markersize=3, fmt='k.', ecolor='k', alpha = 1)
+    ax_normlaised.set(ylabel = 'Normliased flux', xlabel='JD - {:,}'.format(time_offset), ylim=(1 - 1.5*depth_normalised, 1 + depth_normalised), 
+                    title='TIC-{:}\n{:}\nSummary 1'.format(target_row['tic_id'][0], Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
+
+                
+    ax_sky.plot(time-time_offset,photometry_file['TIC-{:}_Sky_level'.format(target_row['tic_id'][0])], 'b', label='Sky counts\nin Aperture')
+    ax_sky.set(ylabel = 'Sky counts\nIn aperture', xlabel='JD - {:,}'.format(time_offset))
+    ax_sky.legend() 
+    sky_twin = ax_sky.twinx() 
+    sky_twin.errorbar(time-time_offset, target_flux, yerr=target_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+    t_raw_target_bin, f_raw_target_bin, f_raw_target_bin_err = lc_bin(np.array(photometry_file['JD']), target_flux, 0.5/24/6)
+    sky_twin.errorbar(t_raw_target_bin-time_offset, f_raw_target_bin, yerr=f_raw_target_bin_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 1, label='Raw flux\nin Perture')
+    sky_twin.legend()
+    sky_twin.set(ylabel = 'Raw counts\nIn aperture', ylim = (np.median(f_raw_target_bin) - (np.max(f_raw_target_bin) - np.min(f_raw_target_bin)) , np.median(f_raw_target_bin) + (np.max(f_raw_target_bin) - np.min(f_raw_target_bin)) ))
+
+    #t_skyflux_bin, f_skyflux_bin, _ = lc_bin(np.array(photometry_file['JD']), photometry_file['TIC-{:}_Sky_level'.format(target_row['tic_id'][0])], 0.5/24/6)
+    #ax_sky.plot(t_skyflux_bin-time_offset, f_skyflux_bin, 'k')
+
+    ax_maxflux.plot(time-time_offset,photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])], 'k', alpha = 0.2)
+    ax_maxflux.set(ylabel = 'Max counts', xlabel='JD - {:,}'.format(time_offset))
+    t_maxflux_bin, f_maxflux_bin, _ = lc_bin(np.array(photometry_file['JD']), photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])], 0.5/24/6)
+    ax_maxflux.plot(t_maxflux_bin-time_offset, f_maxflux_bin, 'k')
+
+    ax_x.scatter(time-time_offset,photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])], c='b', s=2, alpha = 0.2, label='WCS positon' )  
+    ax_x.scatter(time-time_offset,photometry_file['TIC-{:}_X_coordinate_centroid'.format(target_row['tic_id'][0])], c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  )  
+    ax_x.set(ylabel = 'X pixel', xlabel='JD - {:,}'.format(time_offset))
+    ax_x.legend() 
+
+    ax_y.scatter(time-time_offset,photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])], c='b', s=2, alpha = 0.2, label='WCS positon' )  
+    ax_y.scatter(time-time_offset,photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])], c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  )  
+    ax_y.set(ylabel = 'Y pixel', xlabel='JD - {:,}'.format(time_offset))
+    ax_y.legend() 
+
+    ax_airmass.plot(time-time_offset,photometry_file['AIRMASS'], 'k' )  
+    ax_airmass.set(ylabel = 'Airmass [sec z]', xlabel='JD - {:,}'.format(time_offset))
     
-    # Now create the figure
-    f = plt.figure(figsize = (12,5))
-    plt.errorbar(np.array(photometry_file['JD'])-time_offset, detrended_flux, yerr=detrended_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.3)
-
-    # Now bin to 5 minutes 
-    plt.errorbar(t_bin-time_offset, f_bin, yerr=f_bin_err, markersize=3, fmt='k.', ecolor='k', alpha = 1)
-    rms_5 = int(1e6*np.std(f_bin))
-
-
-    tile_text = '{:} [{:}]\n{:}\nRMS = {:,} ppm [{:,} @ 5 min]'.format(tic_id_target,    Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10],args.fieldcam, rms, rms_5)
-    plt.gca().set(xlabel='JD-{:,}'.format(time_offset), ylabel='Flux',title=tile_text)
-    plt.grid()
-    plt.ylim(1 - 1.5*depth, 1 + depth)
-    plt.tight_layout()
-
-    # Finally, create the 
-    tmp = np.array([np.array(photometry_file['JD']), detrended_flux, detrended_flux_err]).T
-    np.savetxt('{:}/{:}_{:}_{:}_FLUX_NORMED.dat'.format(args.output_dir, tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
-
-
-    # Finally, convert to mag 
-    mag, mag_err = convertFluxToMags(detrended_flux, detrended_flux_err)
-    tmp = np.array([np.array(photometry_file['JD']), mag, mag_err]).T
-    np.savetxt('{:}/{:}_{:}_{:}_MAG_NORMED.dat'.format(args.output_dir, tic_id_target, args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
-
-    #return f, plt.gca() , Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10], tmp
-    plt.savefig('{:}/{:}.png'.format(args.output_dir, args.photometry_file.split('/')[-1][:-4]))
+    ax_temperature.plot(time-time_offset,photometry_file['CCD_TEMP'], 'b' , label='CCD Temperature [K]')
+    ax_focus = ax_temperature.twinx()
+    ax_focus.plot(time-time_offset,photometry_file['FOCUS_TEMP'], 'g' , label='Focus Temperature [K]')
+    ax_temperature.legend() 
+    ax_focus.legend()
+    ax_focus.set(ylabel='Focus temperature [K]')
+    ax_temperature.set(ylabel = 'CCD temperature [K]', xlabel='JD - {:,}'.format(time_offset))
+    plt.savefig('{:}/TIC-{:}_{:}_{:}_action_summary_1.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
     plt.close()
+
+
+    #################################
+    #        Summary plot 2         #
+    #################################
+    nrows = 3
+    fig = plt.figure(constrained_layout=True,figsize =  (5, nrows*3))
+    spec2 = gridspec.GridSpec(ncols=1, nrows=nrows, figure=fig, )
+    ax_normlaised = fig.add_subplot(spec2[0])
+    ax_raw_target = fig.add_subplot(spec2[1])
+    ax_comp_target = fig.add_subplot(spec2[2])
+
+    ax_normlaised.errorbar(time-time_offset, normlaised_flux, yerr=normlaised_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+    ax_normlaised.errorbar(t_bin-time_offset, f_bin_normalised, yerr=f_bin_err_normlaised, markersize=3, fmt='k.', ecolor='k', alpha = 1)
+    ax_normlaised.set(ylabel = 'Normliased flux', xlabel='JD - {:,}'.format(time_offset), ylim=(1 - 1.5*depth_normalised, 1 + depth_normalised), 
+                    title='TIC-{:}\n{:}\nSummary 2'.format(target_row['tic_id'][0], Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
+
+
+    ax_raw_target.errorbar(time-time_offset, target_flux, yerr=target_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+    t_raw_target_bin, f_raw_target_bin, f_raw_target_bin_err = lc_bin(np.array(photometry_file['JD']), target_flux, 0.5/24/6)
+    ax_raw_target.errorbar(t_raw_target_bin-time_offset, f_raw_target_bin, yerr=f_raw_target_bin_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 1)
+    A = np.vstack([np.array(photometry_file['AIRMASS']), np.ones(len(time))]).T # Now do PCA to fit the airmass out
+    try:
+        fit = np.sum((A*np.linalg.lstsq(A, target_flux, rcond=None)[0]).T, axis=0)
+        ax_raw_target.plot(time-time_offset, fit, 'r', label='Airmass^2 trend fit', alpha = 0.5)
+    except : pass
+    ax_raw_target.set(ylabel = 'Raw flux', xlabel='JD - {:,}'.format(time_offset), ylim = (np.median(f_raw_target_bin) - (np.max(f_raw_target_bin) - np.min(f_raw_target_bin)) , np.median(f_raw_target_bin) + (np.max(f_raw_target_bin) - np.min(f_raw_target_bin)) ))
+    ax_raw_target.legend()
+
+
+    ax_comp_target.errorbar(time-time_offset, comparison_flux, yerr=comparison_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+    t_raw_comparison_flux_bin, f_raw_comparison_flux_bin, f_raw_comp_bin_err = lc_bin(np.array(photometry_file['JD']), comparison_flux, 0.5/24/6)
+    ax_comp_target.errorbar(t_raw_comparison_flux_bin-time_offset, f_raw_comparison_flux_bin, yerr=f_raw_comp_bin_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 1)
+    A = np.vstack([np.array(photometry_file['AIRMASS'])**3, np.ones(len(time))]).T # Now do PCA to fit the airmass out
+    try:
+        fit = np.sum((A*np.linalg.lstsq(A, comparison_flux, rcond=None)[0]).T, axis=0)
+        ax_comp_target.plot(time-time_offset, fit, 'r', label='Fitted airmass trend', alpha = 0.5)
+    except : pass
+    ax_comp_target.set(ylabel = 'Comparison flux', xlabel='JD - {:,}'.format(time_offset), ylim = (np.median(f_raw_comparison_flux_bin) - (np.max(f_raw_comparison_flux_bin) - np.min(f_raw_comparison_flux_bin)) , np.median(f_raw_comparison_flux_bin) + (np.max(f_raw_comparison_flux_bin) - np.min(f_raw_comparison_flux_bin)) ))
+    ax_comp_target.legend()
+
+
+    plt.savefig('{:}/TIC-{:}_{:}_{:}_action_summary_2.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
+    plt.close()
+
+
+
+    def summary_3_plot_func(ax, time, time_offset, star_flux, star_flux_err, comparison_flux, comparison_flux_err, airmass, X, XC, Y, YC, max_flux):
+        # First, bin the raw data
+        raw_time_binned, raw_binned, raw_binned_err = lc_bin(time, star_flux, 0.5/24/6)
+
+        # Now plot the raw flux 
+        ax[2].errorbar(time-time_offset, star_flux, yerr=star_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+        ax[2].errorbar(raw_time_binned-time_offset, raw_binned, yerr=raw_binned_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 1)
+        ylim_raw = (np.median(raw_binned) - (np.max(raw_binned) - np.min(raw_binned)), np.median(raw_binned) + (np.max(raw_binned) - np.min(raw_binned)))
+        ax[2].set(ylabel='Raw Flux', xlabel='JD - {:,}'.format(time_offset), ylim=ylim_raw)
+
+        # Now fit airmass^3 trend to it 
+        A = np.vstack([airmass**3, np.ones(len(time))]).T # Now do PCA to fit the airmass out
+        try:
+            fit = np.sum((A*np.linalg.lstsq(A, star_flux, rcond=None)[0]).T, axis=0)
+            ax[2].plot(time-time_offset, fit, 'r', label='Airmass^3 trend fit')
+            ax[2].legend()
+            ax[3].errorbar(time-time_offset, star_flux/fit, yerr=star_flux_err/fit, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+            raw_time_binned_d, raw_binned_d, raw_binned_err_d = lc_bin(time, star_flux/fit, 0.5/24/6)
+            ax[3].errorbar(raw_time_binned_d-time_offset, raw_binned_d, yerr=raw_binned_err_d, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 1)
+            ylim_raw_airmass_detrended = (np.median(raw_binned_d) - (np.max(raw_binned_d) - np.min(raw_binned_d)), np.median(raw_binned_d) + (np.max(raw_binned_d) - np.min(raw_binned_d)))
+            ax[3].set(ylabel='Raw Flux\nAirmass detrended', xlabel='JD - {:,}'.format(time_offset), ylim=ylim_raw_airmass_detrended )
+        except : pass
+
+        # now plot XY
+        ax[4].scatter(time-time_offset,X, c='b', s=2, alpha = 0.2, label='WCS positon' )  
+        ax[4].scatter(time-time_offset,XC, c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  )  
+        ax[4].set(ylabel = 'X pixel', xlabel='JD - {:,}'.format(time_offset))
+        ax[4].legend() 
+
+        ax[5].scatter(time-time_offset,Y, c='b', s=2, alpha = 0.2, label='WCS positon' )  
+        ax[5].scatter(time-time_offset,YC, c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  )  
+        ax[5].set(ylabel = 'Y pixel', xlabel='JD - {:,}'.format(time_offset))
+        ax[5].legend() 
+
+        # Now plot the detrended flux 
+        detrended_flux = star_flux / comparison_flux 
+        detrended_flux_err = star_flux_err / comparison_flux 
+        ax[0].errorbar(time-time_offset, detrended_flux, yerr=detrended_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+        detrended_time_binned, detrended_binned, detrended_binned_err = lc_bin(time, detrended_flux, 0.5/24/6)
+        ax[0].errorbar(detrended_time_binned-time_offset, detrended_binned, yerr=detrended_binned_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 1)
+        ylim_detrended = (np.median(detrended_binned) - (np.max(detrended_binned) - np.min(detrended_binned)), np.median(detrended_binned) + (np.max(detrended_binned) - np.min(detrended_binned)))
+        ax[0].set(ylabel='Detrended Flux', xlabel='JD - {:,}'.format(time_offset), ylim=ylim_detrended )
+
+
+        Nquarter = int(0.25*detrended_binned.shape[0])
+        norm_constant = np.max([ np.median(detrended_binned[:Nquarter]), np.median(detrended_binned[Nquarter:2*Nquarter]) , np.median(detrended_binned[2*Nquarter:3*Nquarter]) ,  np.median(detrended_binned[-Nquarter:])  ])
+        ax[0].axhline(norm_constant, c='r', ls='--', alpha = 0.4, label='Normalisation constant')
+        ax[0].legend() 
+
+        # Now do the normalised flux
+        normlaised_flux = detrended_flux / norm_constant 
+        normlaised_flux_err = detrended_flux_err / norm_constant 
+        normalised_time_binned, normalised_binned, normalised_binned_err = lc_bin(time, normlaised_flux, 0.5/24/6)
+        ax[1].errorbar(time-time_offset, normlaised_flux, yerr=normlaised_flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.2)
+        ax[1].errorbar(normalised_time_binned-time_offset, normalised_binned, yerr=normalised_binned_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 1)
+        ylim_normalised = (np.median(normalised_binned) - (np.max(normalised_binned) - np.min(normalised_binned)), np.median(normalised_binned) + (np.max(normalised_binned) - np.min(normalised_binned)))
+        ax[1].set(ylabel='Normalised Flux', xlabel='JD - {:,}'.format(time_offset), ylim=ylim_normalised )
+
+        # Now do the max flux 
+        ax[6].plot(time-time_offset, max_flux, c='lightgrey')
+        max_time_binned, max_binned, max_binned_err = lc_bin(time, max_flux, 0.5/24/6)
+        ax[6].errorbar(max_time_binned-time_offset, max_binned, yerr=max_binned_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 1)
+        ax[6].set(ylabel='Max counts in aperture', xlabel='JD - {:,}'.format(time_offset ))
+
+    #################################
+    #        Summary plot 3         #
+    #################################
+    nplots = 1 + len(FP_table)
+    fig = plt.figure(constrained_layout=True,figsize =  (5, nrows*3 + 3))
+    spec2 = gridspec.GridSpec(ncols=1, nrows=nrows, figure=fig, )
+    ax_normlaised = fig.add_subplot(spec2[0])
+
+    # Now plots transits
+    ncols = 7
+    nrows = 1 + len(FP_table)
+    f, axs = plt.subplots(nrows = nrows, ncols = ncols, figsize=(4*ncols, 4*nrows), constrained_layout=True)
+    axs = np.atleast_2d(axs)
+    for i in range(1+len(FP_table)):
+        if i==0:
+            summary_3_plot_func(axs[i], time, time_offset, target_flux, target_flux_err, comparison_flux, comparison_flux_err,
+                                photometry_file['AIRMASS'], photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])],
+                                photometry_file['TIC-{:}_X_coordinate_centroid'.format(target_row['tic_id'][0])],
+                                photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])],
+                                photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])],
+                                photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])])
+            text = 'TIC-{:}\nTmag = {:.3f}'.format(target_row['tic_id'][0], target_row['Tmag'][0])
+            axs[i,0].text(-0.8,0.5, text, size=17, ha="center", transform=axs[i,0].transAxes)
+
+        else:
+            summary_3_plot_func(axs[i], time, time_offset,  photometry_file['TIC-{:}_Aper_flux_3'.format(FP_table['tic_id'][i-1])],  photometry_file['TIC-{:}_Aper_flux_3_err'.format(FP_table['tic_id'][i-1])], comparison_flux, comparison_flux_err,
+                                photometry_file['AIRMASS'], photometry_file['TIC-{:}_X_coordinate'.format(FP_table['tic_id'][i-1])],
+                                photometry_file['TIC-{:}_X_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
+                                photometry_file['TIC-{:}_Y_coordinate'.format(FP_table['tic_id'][i-1])],
+                                photometry_file['TIC-{:}_Y_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
+                                photometry_file['TIC-{:}_Aper_flux_3_max'.format(FP_table['tic_id'][i-1])])  
+
+            text = 'TIC-{:}\nTmag = {:.3f}\n$\Delta$Tmag = {:.3f}\n$\Delta$ pix = {:.2f}\n    = {:.0f}"'.format(FP_table['tic_id'][i-1],
+                                                                     FP_table['Tmag'][i-1],
+                                                                     target_row['Tmag'][0] - FP_table['Tmag'][i-1],
+                                                                     FP_table['Deltapix'][i-1], FP_table['Deltapix'][i-1]*5)
+            axs[i,0].text(-0.8,0.3, text, size=17, ha="center", transform=axs[i,0].transAxes)
+    plt.savefig('{:}/TIC-{:}_{:}_{:}_action_summary_3.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
+    plt.close()
+
+
+
+
+    exit()
