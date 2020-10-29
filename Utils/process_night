@@ -1,5 +1,9 @@
 #!/home/sam/anaconda3/bin/python
 
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 import os, sys, numpy as np
 from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi , PAOPhot_paths
 

@@ -1,3 +1,7 @@
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg') 

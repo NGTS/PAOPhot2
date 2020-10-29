@@ -1,5 +1,9 @@
 import numpy as np
 
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 def convertFluxToMags(lightcurve, error):
     """
     Convert normalised lightcurve to differential

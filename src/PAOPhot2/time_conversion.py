@@ -1,3 +1,6 @@
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 from astropy.coordinates import EarthLocation
 import astropy.units as u

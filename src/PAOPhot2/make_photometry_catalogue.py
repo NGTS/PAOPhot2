@@ -1,3 +1,7 @@
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 from astropy.table import Table, vstack
 from astropy.io import fits 
 import numpy as np 

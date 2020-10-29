@@ -1,5 +1,9 @@
 #!/home/sam/anaconda3/bin/python
 
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 from astropy.table import Table, vstack, Column
 from astropy.io import fits 
 import numpy as np 

@@ -3,6 +3,10 @@ General database functions for process
 
 Any functions that interact with the database should go here
 """
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 from contextlib import contextmanager
 from collections import defaultdict
 import pymysql
