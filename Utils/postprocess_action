@@ -340,6 +340,7 @@ if __name__=="__main__":
                                 photometry_file['TIC-{:}_X_coordinate_flux_centroid'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])],
+                                photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])])
             text = 'TIC-{:}\nTmag = {:.3f}'.format(target_row['tic_id'][0], target_row['Tmag'][0])
             axs[i,0].text(-0.8,0.5, text, size=17, ha="center", transform=axs[i,0].transAxes)
