@@ -172,5 +172,5 @@ if __name__=="__main__":
     plt.scatter(comparison_table['Tmag'][~(negative_flux_comp_mask | mask_rawflux | mask_compfluxratio)],STD_MEDIAN_RAW[~(negative_flux_comp_mask | mask_rawflux | mask_compfluxratio)], c='k' )
     plt.xlabel('Tmag')
     plt.ylabel(r'$\sigma_{F}$ / $\widetilde{F}$')
-    f.savefig('{:}/{:}_Comparison_star_RMS.png'.format(args.output_dir, target_row['tic_id'][0]), dpi=250)
+    f.savefig('{:}/TIC-{:}_Comparison_star_RMS.png'.format(args.output_dir, target_row['tic_id'][0]), dpi=250)
     plt.close()
