@@ -349,6 +349,7 @@ if __name__=="__main__":
             summary_3_plot_func(axs[i], time, time_offset,  photometry_file['TIC-{:}_Aper_flux_3'.format(FP_table['tic_id'][i-1])],  photometry_file['TIC-{:}_Aper_flux_3_err'.format(FP_table['tic_id'][i-1])], comparison_flux, comparison_flux_err,
                                 photometry_file['AIRMASS'], photometry_file['TIC-{:}_X_coordinate'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_X_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
+                                photometry_file['TIC-{:}_X_coordinate_flux_centroid'.format(FP_table['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_Y_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(FP_table['tic_id'][0])],
