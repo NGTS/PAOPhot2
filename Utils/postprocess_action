@@ -203,7 +203,7 @@ if __name__=="__main__":
     ax_focus.legend()
     ax_focus.set(ylabel='Focus temperature [K]')
     ax_temperature.set(ylabel = 'CCD temperature [K]', xlabel='JD - {:,}'.format(time_offset))
-    plt.savefig('{:}/TIC-{:}_{:}_{:}_action_summary_1.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
+    plt.savefig('{:}/TIC-{:}_{:}_{:}_summary_1.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
     plt.close()
 
 
@@ -247,7 +247,7 @@ if __name__=="__main__":
     ax_comp_target.legend()
 
 
-    plt.savefig('{:}/TIC-{:}_{:}_{:}_action_summary_2.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
+    plt.savefig('{:}/TIC-{:}_{:}_{:}_summary_2.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
     plt.close()
 
 
@@ -353,7 +353,7 @@ if __name__=="__main__":
                                                                      target_row['Tmag'][0] - FP_table['Tmag'][i-1],
                                                                      FP_table['Deltapix'][i-1], FP_table['Deltapix'][i-1]*5)
             axs[i,0].text(-0.8,0.3, text, size=17, ha="center", transform=axs[i,0].transAxes)
-    plt.savefig('{:}/TIC-{:}_{:}_{:}_action_summary_3.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
+    plt.savefig('{:}/TIC-{:}_{:}_{:}_summary_3.png'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
     plt.close()
 
 
