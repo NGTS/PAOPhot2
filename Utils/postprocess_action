@@ -252,7 +252,7 @@ if __name__=="__main__":
 
 
 
-    def summary_3_plot_func(ax, time, time_offset, star_flux, star_flux_err, comparison_flux, comparison_flux_err, airmass, X, XC, Y, YC, max_flux):
+    def summary_3_plot_func(ax, time, time_offset, star_flux, star_flux_err, comparison_flux, comparison_flux_err, airmass, X, XC, XFC, Y, YC, YFC, max_flux):
         # First, bin the raw data
         raw_time_binned, raw_binned, raw_binned_err = lc_bin(time, star_flux, 0.5/24/6)
 
@@ -278,11 +278,14 @@ if __name__=="__main__":
         # now plot XY
         ax[4].scatter(time-time_offset,X, c='b', s=2, alpha = 0.2, label='WCS positon' )  
         ax[4].scatter(time-time_offset,XC, c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  )  
+        ax[4].scatter(time-time_offset,XFC, c='r', s=2, alpha = 0.2, label='Flux centroid'  )  
+
         ax[4].set(ylabel = 'X pixel', xlabel='JD - {:,}'.format(time_offset))
         ax[4].legend() 
 
         ax[5].scatter(time-time_offset,Y, c='b', s=2, alpha = 0.2, label='WCS positon' )  
-        ax[5].scatter(time-time_offset,YC, c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  )  
+        ax[5].scatter(time-time_offset,YC, c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  ) 
+        ax[5].scatter(time-time_offset,YFC, c='r', s=2, alpha = 0.2, label='Flux centroid'  )   
         ax[5].set(ylabel = 'Y pixel', xlabel='JD - {:,}'.format(time_offset))
         ax[5].legend() 
 
@@ -334,6 +337,7 @@ if __name__=="__main__":
             summary_3_plot_func(axs[i], time, time_offset, target_flux, target_flux_err, comparison_flux, comparison_flux_err,
                                 photometry_file['AIRMASS'], photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_X_coordinate_centroid'.format(target_row['tic_id'][0])],
+                                photometry_file['TIC-{:}_X_coordinate_flux_centroid'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])])
@@ -346,6 +350,7 @@ if __name__=="__main__":
                                 photometry_file['TIC-{:}_X_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_Y_coordinate'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_Y_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
+                                photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(FP_table['tic_id'][0])],
                                 photometry_file['TIC-{:}_Aper_flux_3_max'.format(FP_table['tic_id'][i-1])])  
 
             text = 'TIC-{:}\nTmag = {:.3f}\n$\Delta$Tmag = {:.3f}\n$\Delta$ pix = {:.2f}\n    = {:.0f}"'.format(FP_table['tic_id'][i-1],
