@@ -118,11 +118,30 @@ if __name__=="__main__":
     # Now save the raw flux in the action folder and in action lightcurves (used for photpack)
     tmp = np.array([np.array(photometry_file['JD']), detrended_flux, detrended_flux_err,]).T
     np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
-    #np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
 
     # Finally, save the normalised lightcurve 
     tmp = np.array([np.array(photometry_file['JD']),normlaised_flux, normlaised_flux_err]).T
     np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX_NORMED.dat'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
+
+    # Now save the action lightcurve
+    tmp = np.array([np.array(photometry_file['JD']), np.array(photometry_file['BJD']), np.array(photometry_file['HJD']),
+                    np.array(photometry_file['AIRMASS']),
+                    np.array(photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])]) ,  np.array(photometry_file['TIC-{:}_X_coordinate_centroid'.format(target_row['tic_id'][0])]), np.array(photometry_file['TIC-{:}_X_coordinate_flux_centroid'.format(target_row['tic_id'][0])]),
+                    np.array(photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])]) ,  np.array(photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])]), np.array(photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(target_row['tic_id'][0])]),
+                    np.array(photometry_file['TIC-{:}_Sky_level'.format(target_row['tic_id'][0])]) ,  np.array(photometry_file['TIC-{:}_Sky_level_err'.format(target_row['tic_id'][0])]),
+                    np.array(photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])]) ,
+                    detrended_flux, detrended_flux_err]).T
+    header = ['JD', 'BJD', 'HJD',
+              'AIRMASS',
+              'X', 'XWINPOS', 'XFLUXCENTROID',
+              'Y', 'YWINPOS', 'YFLUXCENTROID',
+              'SKY_COUNTS_IN_APERTURE', 'SKY_COUNTS_IN_APERTURE_ERR',
+              'MAX_PIXEL_COUNT_IN_APERTURE',
+              'DETRENDED_FLUX', 'DETRENDED_FLUX_ERR']
+    header = ' '.join(header)
+    np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp, header=header)
+
+
 
     #################################
     #        Summary plot 1         #

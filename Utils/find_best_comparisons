@@ -59,6 +59,7 @@ if __name__=="__main__":
     negative_flux_comp_mask = np.zeros(len(comparison_table), dtype = np.bool)
     for i in range(len(comparison_table)):
         if np.median( photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])] ) < 0 : negative_flux_comp_mask[i] = True
+        if np.sum(photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])]/(3**2*np.pi) > 50000) > 50 : negative_flux_comp_mask[i] = True # catches saturated stars
     tic_ids = np.array(['TIC-{:}'.format(i) for i in comparison_table['tic_id']]) 
 
     # Now lets get the flux columns
