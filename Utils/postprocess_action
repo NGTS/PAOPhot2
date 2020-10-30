@@ -183,11 +183,13 @@ if __name__=="__main__":
 
     ax_x.scatter(time-time_offset,photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])], c='b', s=2, alpha = 0.2, label='WCS positon' )  
     ax_x.scatter(time-time_offset,photometry_file['TIC-{:}_X_coordinate_centroid'.format(target_row['tic_id'][0])], c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  )  
+    ax_x.scatter(time-time_offset,photometry_file['TIC-{:}_X_coordinate_flux_centroid'.format(target_row['tic_id'][0])], c='r', s=2, alpha = 0.2, label='Flux centroid'  )  
     ax_x.set(ylabel = 'X pixel', xlabel='JD - {:,}'.format(time_offset))
     ax_x.legend() 
 
     ax_y.scatter(time-time_offset,photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])], c='b', s=2, alpha = 0.2, label='WCS positon' )  
-    ax_y.scatter(time-time_offset,photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])], c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  )  
+    ax_y.scatter(time-time_offset,photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])], c='g', s=2, alpha = 0.2, label='SEP winpos centroid'  ) 
+    ax_x.scatter(time-time_offset,photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(target_row['tic_id'][0])], c='r', s=2, alpha = 0.2, label='Flux centroid'  )   
     ax_y.set(ylabel = 'Y pixel', xlabel='JD - {:,}'.format(time_offset))
     ax_y.legend() 
 
