@@ -47,6 +47,6 @@ else:
         f.write('\n\n{:}'.format(cmd))
 
         f.close()
-        #os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
+        os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
 
         print('\tSubmitted job for TIC-{:} corrosponding to action {:} [Field : {:} -- Camera : {:} -- Nimages {:,}]'.format(action['TICID'], action['action_id'], action['field'], action['camera_id'], action['num_images']))
