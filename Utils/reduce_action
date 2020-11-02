@@ -149,16 +149,6 @@ if __name__=="__main__":
         print(cmd)
         #os.system(cmd) 
         errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1hr timeout
-        # Finally, we need to estimate what the dilution is for each target in the frame using NGTSDilution
-        cmd = '/usr/local/anaconda3/bin/python {:}/ngtsdilution.py {:} {:} --output_dir {:} --threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
-                                                                        solved_autoguider_image_location,
-                                                                        solved_autoguider_catalogue_location,
-                                                                        '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']),
-                                                                        args.threads,
-                                                                        '{:}/NGTS_PRF/NG0029-3024_813_IMAGE81320191012010055_cat.npy'.format(PAOPhot_paths['NGTSDilution_path']))
-        print(cmd)
-        #os.system(cmd) 
-        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400) # 9 hr timeout
 
         # If we are here, we should have both the catalogue and the solve WCS image in our directiory. 
         # Lets check
@@ -176,6 +166,20 @@ if __name__=="__main__":
         else : print('refcatpipe2 ran OK')
     else : print('Products found.')
 
+
+    # Now check if we need to do dilution calculation
+    print('Checking to see if we need to calcualte the dilution in the catalogue')
+    if 'Dilution_Tmag_AP3.0' not in Table.read(solved_autoguider_catalogue_location).colnames:
+        print('Not found, making the call')
+        # Finally, we need to estimate what the dilution is for each target in the frame using NGTSDilution
+        cmd = '/usr/local/anaconda3/bin/python {:}/ngtsdilution.py {:} {:} --output_dir {:} --threads {:} --prf_data {:}'.format(PAOPhot_paths['NGTSDilution_path'],
+                                                                        solved_autoguider_image_location,
+                                                                        solved_autoguider_catalogue_location,
+                                                                        '{:}/autotguider_images_and_catalogue'.format(PAOPhot_paths['PAOPhot2_data_path']),
+                                                                        1,
+                                                                        '{:}/NGTS_PRF/NG0029-3024_813_IMAGE81320191012010055_cat.npy'.format(PAOPhot_paths['NGTSDilution_path']))
+        print(cmd, flush=True)
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=32400) # 9 hr timeout
 
     # Now check the photometry catalogue, using thr reference catalogue as a failsafe
     if args.photometry_catalogue == 'None': 
