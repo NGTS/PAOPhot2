@@ -51,7 +51,6 @@ if __name__=="__main__":
         #print('Packing {:} with {:,} files'.format(objects[i], len(object_dict[objects[i]])), end = ' ')
         object_data = None
         for j in tqdm(range(len(object_dict[objects[i]])), desc = 'TIC-{:}'.format(object_dict[objects[i]][1])):
-            print(object_dict[objects[i]][j])
             filename, object, field, camera, action, date = object_dict[objects[i]][j]
 
             # Add the columns 
