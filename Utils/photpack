@@ -50,7 +50,7 @@ if __name__=="__main__":
     for i in range(len(objects)):
         print('Packing {:} with {:,} files'.format(objects[i], len(object_dict[objects[i]])), end = ' ')
         object_data = None
-        for j in tqdm(range(len(object_dict[objects[i]])), desc = 'TIC-{:}'.format(object_dict[objects[i]][0])):
+        for j in tqdm(range(len(object_dict[objects[i]])), desc = 'TIC-{:}'.format(object_dict[objects[i]][1])):
             print(object_dict[objects[i]][j])
             filename, object, field, camera, date = object_dict[objects[i]][j]
 
