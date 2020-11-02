@@ -68,5 +68,4 @@ if __name__=="__main__":
         output_filename = '{:}/output_lightcurves/{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], object_dict[objects[i]][0][1])
         tt.sort('JD')
         tt.write(output_filename, format='fits', overwrite=True)
-        print(' complete.')
 
