@@ -1,0 +1,48 @@
+#!/home/sam/anaconda3/bin/python
+
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+import os, sys, numpy as np, argparse
+from PAOPhot2.db import get_actions_for_object, get_actions_for_field
+import glob
+
+# Arg parser
+def arg_parse():
+    """
+    Parse the command line arguments
+    """
+    p = argparse.ArgumentParser("Check the reduction status of either a field or object.")
+    p.add_argument('--field',
+                   help='The name of the object to check actions for.',
+                   type=str, default='None')
+    p.add_argument('--name',
+                   help='The name of the object to check actions for.',
+                   type=str, default='None')
+    p.add_argument('--commit', action="store_true", default=False, help='Submit the SGE job to reduce the action.')
+    return p.parse_args()
+
+
+
+# Main loop
+if __name__=="__main__":
+    # First, pars the arguments
+    args = arg_parse()
+
+    # Now see what needs doing
+    if args.field != 'None' : actions = get_actions_for_field(args.field)
+    elif args.name != 'None' : actions = get_actions_for_object(args.name)
+    else:
+        print('Neither field or name specified. exiting.')
+        exit()
+    print('Found {:,} actions'.format(len(actions)))
+
+    # Now go through each action, see what has been done
+    photometry_done = np.ones(len(actions), dtype=np.bool)
+    for i in range(len(actions)):
+        # first check if it has been done
+        photfile = glob.glob('/ngts/staging/archive/PAOPhot2/photometry/action{:}/*{:}_photometry.csv'.format(actions[i]['action_id'],actions[i]['action_id']))
+        if len(photfile) ==0 : photometry_done[i] = False
+
+        print('\t{:} on {:}  reduced? {:}'.format(actions[i]['action_id'] , actions[i]['night'], photometry_done[i]))
