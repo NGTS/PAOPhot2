@@ -85,9 +85,3 @@ if __name__=="__main__":
             text += ' --> resubmitted'
 
         print(text)
-
-
-
-    # now check to see if we want to submit this job
-        for i in range(len(actions)):
-            if photometry_done[i] == False:
