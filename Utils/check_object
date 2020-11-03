@@ -20,7 +20,7 @@ def arg_parse():
     p.add_argument('--name',
                    help='The name of the object to check actions for.',
                    type=str, default='None')
-    p.add_argument('--commit', action="store_true", default=False, help='Submit the SGE job to reduce the action.')
+    p.add_argument('--submit', action="store_true", default=False, help='Submit the SGE job to reduce the action.')
     return p.parse_args()
 
 
@@ -38,6 +38,18 @@ if __name__=="__main__":
         exit()
     print('Found {:,} actions'.format(len(actions)))
 
+    # Now convert campaign names to TIC ID
+    for i in range(len(actions)):
+            if actions[i]['campaign'][:3] =='TIC':
+                    actions[i]['TICID'] = actions[i]['campaign'].split('_')[0].split('-')[1]
+                    mask[i] = True
+                    print('\tFound {:}'.format(actions[i]['campaign'].split('_')[0]))
+            elif actions[i]['campaign'][:3] =='TOI':
+                    actions[i]['TICID'] = get_ticid_from_toi(actions[i]['campaign'].split('_')[0].split('-')[1])
+                    if actions[i]['TICID']!= -99 : 
+                        print('\tFound {:} [TIC-{:}]'.format(actions[i]['campaign'].split('_')[0], actions[i]['TICID']))
+                        mask[i] = True
+
     # Now go through each action, see what has been done
     photometry_done = np.ones(len(actions), dtype=np.bool)
     for i in range(len(actions)):
@@ -45,4 +57,34 @@ if __name__=="__main__":
         photfile = glob.glob('/ngts/staging/archive/PAOPhot2/photometry/action{:}/*{:}_photometry.csv'.format(actions[i]['action_id'],actions[i]['action_id']))
         if len(photfile) ==0 : photometry_done[i] = False
 
-        print('\t{:} on {:}  reduced? {:}'.format(actions[i]['action_id'] , actions[i]['night'], photometry_done[i]))
+        print('\t{:} on {:}, campaign {:} with TIC-{:} :   reduced? {:}'.format(actions[i]['action_id'], actions[i]['night'] , actions[i]['campaign'] ,actions[i]['TICID'], photometry_done[i]))
+
+
+
+    # now check to see if we want to submit this job
+    if args.submit:
+        for i in range(len(actions)):
+            if photometry_done[i] == False:
+                action = actions[i] 
+
+                job_file =  '{:}/jobs/PAOPhot_action{:}.sh'.format(PAOPhot_paths['PAOPhot2_data_path'], action['action_id'])
+                log_file =  '{:}/logs/PAOPhot_action{:}.log'.format(PAOPhot_paths['PAOPhot2_data_path'], action['action_id'])
+
+                f = open(job_file, 'w+')
+                f.write('\n#!/bin/tcsh')
+                #f.write('\n#$ -S /bin/tcsh')
+                #f.write('\n#$ -M ngtsops@warwick.ac.uk')
+                f.write('\n#$ -N PAOPhot_action{:}'.format(action['action_id']))
+                f.write('\n#$ -o {:}'.format(log_file))
+                f.write('\n#$ -e {:}'.format(log_file))
+                #f.write('\nexport LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/wcslib/lib')
+                f.write('\nexport LD_LIBRARY_PATH=/usr/local/telescope/CSIMC/icc/libc5:/usr/local/telescope/lib::/usr/local/lib:/usr/local/wcslib/lib')
+                #$((NSLOTS/2))
+                cmd = '/usr/local/anaconda3/bin/reduce_action {:}  --threads 1 --target_ticid {:} --astr_net_tmp $TMPDIR'.format(action['action_id'], action['TICID'])
+                f.write('\n\n{:}'.format(cmd))
+
+                f.close()
+                os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
+
+                print('\tSubmitted job for TIC-{:} corrosponding to action {:} [Field : {:} -- Camera : {:} -- Nimages {:,}]'.format(action['TICID'], action['action_id'], action['field'], action['camera_id'], action['num_images']))
+
