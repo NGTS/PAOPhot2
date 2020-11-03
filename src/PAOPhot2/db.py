@@ -178,5 +178,5 @@ def get_actions_for_field(field):
     qry = 'select * from action_summary_log where field="{:}" and (status="completed" OR status="aborted");'.format(field)
     with open_db(cur_class='dict') as cur:
         cur.execute(qry)
-        result = cur.fetchone()
+        result = cur.fetchall()
     return result
