@@ -180,3 +180,10 @@ def get_actions_for_field(field):
         cur.execute(qry)
         result = cur.fetchall()
     return result
+
+def get_actions_for_object(obejct):
+    qry = 'select * from action_summary_log where campaign like "{:}%" and (status="completed" OR status="aborted");'.format(obejct)
+    with open_db(cur_class='dict') as cur:
+        cur.execute(qry)
+        result = cur.fetchall()
+    return result
