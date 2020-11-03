@@ -92,6 +92,8 @@ def is_action_ready_to_reduce(action_id):
 
 
 
+
+
 def get_action_info(action_id):
     """
     Get action info for scheduling reductions
@@ -170,3 +172,11 @@ def get_ticid_from_toi(TOI_ID):
         print('TOI-{:} is not in {:}'.format(TOI_ID, datafile))
         return -99 
     else : return int(t['TIC ID'][idxs[0][0]])
+
+
+def get_actions_for_field(field):
+    qry = 'select * from action_summary_log where field="{:}" and (status="completed" OR status="aborted");'.format(field)
+    with open_db(cur_class='dict') as cur:
+        cur.execute(qry)
+        result = cur.fetchone()
+    return result

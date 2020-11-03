@@ -1,0 +1,139 @@
+#!/home/sam/anaconda3/bin/python
+
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+
+# Imports
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import argparse, os, sys
+from astropy.table import Table , vstack, Column
+import numpy as np 
+from scipy.stats import sem
+from astropy.stats import sigma_clip
+
+def arg_parse():
+    """
+    Parse the command line arguments
+    """
+    p = argparse.ArgumentParser("Pack PAOPhot2 multi-camera_photometry")
+    p.add_argument('PAOPhot_fits_file',
+                   help='The PAOPhot2 photometry file to stack observations.',
+                   type=str)
+    p.add_argument('--output_dir',
+        help='The output directory.',
+        type=str, default = '.')
+    return p.parse_args()
+
+
+def lc_bin(time, flux, bin_width):
+        '''
+        Function to bin the data into bins of a given width. time and bin_width 
+        must have the same units
+        '''
+        
+        edges = np.arange(np.min(time), np.max(time), bin_width)
+        dig = np.digitize(time, edges)
+        time_binned = (edges[1:] + edges[:-1]) / 2
+        flux_binned = np.array([np.nan if len(flux[dig == i]) == 0 else flux[dig == i].mean() for i in range(1, len(edges))])
+        err_binned = np.array([np.nan if len(flux[dig == i]) == 0 else sem(flux[dig == i]) for i in range(1, len(edges))])
+        time_bin = time_binned[~np.isnan(err_binned)]
+        err_bin = err_binned[~np.isnan(err_binned)]
+        flux_bin = flux_binned[~np.isnan(err_binned)]   
+        
+        return time_bin, flux_bin, err_bin
+
+def get_normalisation_constant(time, flux):
+    # Now bin the photometry to 5 minutes
+    t_bin, f_bin, f_bin_err = lc_bin(time, flux, 0.5/24/6)
+    f_bin_filtered = sigma_clip(f_bin)
+    Nquarter = int(0.25*f_bin_filtered.shape[0])
+    norm_constant = np.max([ np.median(f_bin_filtered[:Nquarter]), np.median(f_bin_filtered[Nquarter:2*Nquarter]) , np.median(f_bin_filtered[2*Nquarter:3*Nquarter]) ,  np.median(f_bin_filtered[-Nquarter:])  ])
+    return norm_constant
+
+  
+
+def stack_table(tsub):
+    unique_actions = np.unique(tsub['action'])
+    unique_cameras = np.unique(tsub['CAMERA'])
+    print(': found {:,} actions'.format(len(unique_actions)))
+    
+    # Catch if nothing
+    if len(unique_actions)==1 : return 
+    
+    # Now find the best action to stack against
+    STDS = np.zeros(unique_actions.shape[0])
+    for i in range(unique_actions.shape[0]) : STDS[i] = np.std(tsub[tsub['action']==unique_actions[i]]['DETRENDED_FLUX'])
+
+    # Now get the target flux 
+    best_action = unique_actions[np.argmin(STDS)]
+    ref_flux = get_normalisation_constant(tsub[tsub['action']==best_action]['JD'], tsub[tsub['action']==best_action]['DETRENDED_FLUX'])
+
+    # Now get normalisation constants
+    normalisation_constants = np.zeros(unique_actions.shape[0])
+    for i in range(unique_actions.shape[0]) : normalisation_constants[i] = get_normalisation_constant(tsub[tsub['action']==unique_actions[i]]['JD'], tsub[tsub['action']==unique_actions[i]]['DETRENDED_FLUX'])
+    
+    # Now stack the flux and error normalised to 1
+    tmp = None 
+    for i in range(unique_actions.shape[0]) : 
+        tmp_ = np.array([tsub[tsub['action']==unique_actions[i]]['JD'], tsub[tsub['action']==unique_actions[i]]['DETRENDED_FLUX']/ normalisation_constants[i] , tsub[tsub['action']==unique_actions[i]]['DETRENDED_FLUX_ERR']/ normalisation_constants[i] ]).T 
+        if i==0 : tmp = np.copy(tmp_)
+        else : tmp = np.vstack((tmp,tmp_))
+
+    # Now sort in time
+    sort = sorted(zip(*tmp.T))
+    time = np.array([i[0] for i in sort])
+    flux = np.array([i[1] for i in sort])
+    flux_err = np.array([i[2] for i in sort])
+
+    # Now bin to 13 seconds 
+    time, flux, flux_err = lc_bin(time, flux, 0.000150463)
+    time_5, flux_5, flux_err_5 = lc_bin(time, flux, 0.5/24/6)
+    depth = np.max(flux_5) - np.min(flux_5)
+
+    # Now plot
+    f = plt.figure()
+    plt.errorbar(time, flux, yerr=flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.4, label='13-second coadded')
+    plt.errorbar(time_5, flux_5, yerr=flux_err_5, markersize=3, fmt='b.', ecolor='blue', alpha = 1, label='5-minute coadded')
+    plt.ylim(1 - 1.5*depth, 1 + depth)
+    title = '{:}\nNight of {:}\nCameras : {:}'.format(tsub['OBJECT'][0], tsub['DATE'][0], ','.join(unique_cameras))
+    plt.title(title)
+    plt.xlabel('JD')
+    plt.ylabel('Flux')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('{:}/{:}_{:}_{:}camera.png'.format(args.output_dir,tsub['OBJECT'][0], tsub['DATE'][0], len(unique_cameras) )) 
+    plt.close()
+
+    # Now smake the table
+    coadded_table = Table(np.array([time, flux, flux_err]).T, names=['JD', 'FLUX', 'FLUX_ERR'])
+    coadded_table.write('{:}/{:}_{:}_{:}camera.fits'.format(args.output_dir,tsub['OBJECT'][0], tsub['DATE'][0], len(unique_cameras) ))
+
+if __name__=="__main__":
+    # parse the arguemnts
+    args = arg_parse()
+
+    # Load the file
+    t = Table.read(args.PAOPhot_fits_file)
+
+    # Look for the nights
+    unique_nights = np.unique(t['DATE'])
+    print('Found {:,} night(s)'.format(len(unique_nights)))
+
+    # Now cycle nights
+    for i in range(len(unique_nights)):
+        print('\tProcessing {:}'.format(unique_nights[i]), end = ' ')
+
+        # Get the sub table
+        tsub = t[t['DATE']==unique_nights[i]]
+
+        # Now stack the table
+        try : stack_table(tsub)
+        except : pass
+
+
+
+
