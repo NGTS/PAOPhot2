@@ -5,7 +5,7 @@ import os
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 import os, sys, numpy as np, argparse
-from PAOPhot2.db import get_actions_for_object, get_actions_for_field
+from PAOPhot2.db import get_actions_for_object, get_actions_for_field , PAOPhot_paths
 import glob
 
 # Arg parser
