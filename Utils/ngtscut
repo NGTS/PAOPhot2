@@ -83,6 +83,20 @@ def get_mins(data, X, Y, width):
 
 
 
+@contextmanager
+def change_directory(path):
+    '''
+    Context manager to change into a directory, then back again when the scope
+    is over
+    :param path:
+        New path to change to
+    '''
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(path)
+        yield path
+    finally:
+        os.chdir(old_cwd)
 
 def generate_movie(image_directory, output_filename, fps=15, use_mencoder=False):
     '''
