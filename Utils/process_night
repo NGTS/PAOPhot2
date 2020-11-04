@@ -49,11 +49,6 @@ else:
             actions[i]['host'] = host = "ngts-par-das-{:02d}".format(actions[i]['das_id'])
     actions = actions[mask]
 
-    if USE_HOSTS:
-        # we need to get the dasID for the actions
-        for i in range(len(actions)):
-
-
     print('Making jobs for actions')
     for action in actions[:]:
         job_file =  '{:}/jobs/PAOPhot_action{:}.sh'.format(PAOPhot_paths['PAOPhot2_data_path'], action['action_id'])
