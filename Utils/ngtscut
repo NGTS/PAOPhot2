@@ -95,13 +95,15 @@ if __name__=="__main__":
     image_data = fits.open(image_path)[0].data        
     cut_frame = cut_image(image_data, args.x, args.y, args.width)
     data_array = np.zeros((len(images_information), cut_frame.shape[0], cut_frame.shape[1]))[::args.frame_skip]
-    time_array = np.zeros(cut_frame.shape[0])
+    time_array = np.zeros(data_array.shape[0])
 
+    count=0
     for i in tqdm(range(len(images_information))[::args.frame_skip], desc='Gathering data'):
         image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
         image_data = fits.open(image_path)[0].data        
-        data_array[i] = cut_image(image_data, args.x, args.y, args.width)
-        time_array[i] = images_information[i]['mjd']
+        data_array[count] = cut_image(image_data, args.x, args.y, args.width)
+        time_array[count] = images_information[i]['mjd']
+        count+=1
     xmin, ymin = get_mins(image_data, args.x, args.y, args.width) 
 
 
