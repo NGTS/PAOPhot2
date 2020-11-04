@@ -58,21 +58,29 @@ def arg_parse():
     return p.parse_args()
 
 
+def check_image_location(das_id, action, image_id):
+    # First check if it hasn't been compressed yet and local
+    image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits'.format(das_id, action, image_id)
+    if os.path.isfile(image_path) : return image_path 
+
+    # Now check if local and has been compressed
+    image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits+bz2'.format(das_id, action, image_id)
+    if os.path.isfile(image_path) : return image_path  
+
+    # Now check if its finally on staging
+    image_path = '/ngts/staging/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action,  image_id) # action has been copied to staging
+    if os.path.isfile(image_path) : return image_path  
+
+    return None
+
 
 
 def photometry_worker(i):
     print('Processing image {:,} out of {:,}'.format(i, len(images_information)) )
-    #image_path = '/ngts/das01/action254027_observeField/IMAGE81120200928093346.fits.bz2'
-    image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits'.format(action_info['das_id'], 
-                                                                                    args.action, 
-                                                                                    images_information[i]['image_id'])
-    if not os.path.isfile(image_path) :
-        print('Unable to find {:} on {:}, trying staging'.format(image_path, action_info['das_id']))
-        image_path = '/ngts/staging/action{:}_observeField/IMAGE{:}.fits.bz2'.format(args.action,  images_information[i]['image_id']) # action has been copied to staging
-        if not os.path.isfile(image_path) : 
-            print('Unable to find {:} on staging, aborting :('.format(image_path))
-            return
-
+    image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])
+    if image_path is None : 
+            print('Unable to find image {:}'.format(image_path))
+            return 
 
     # Create the WCSPhot command
     cmd = '/usr/local/anaconda3/bin/python {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['WCSPhotpipe_path'],
@@ -221,17 +229,7 @@ if __name__=="__main__":
     print('\tImage reduction complete. Counting number of photfiles. ')
     reduced_mask = np.zeros(len(images_information), dtype=np.bool)
     for i in range(len(images_information))[:]:
-        image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits'.format(action_info['das_id'], 
-                                                                                        args.action, 
-                                                                                        images_information[i]['image_id'])
-
-        if not os.path.isfile(image_path) :
-            print('Unable to find {:} on {:}, trying staging'.format(image_path, action_info['das_id']))
-            image_path = '/ngts/staging/action{:}_observeField/IMAGE{:}.fits.bz2'.format(args.action,  images_information[i]['image_id']) # action has been copied to staging
-            if not os.path.isfile(image_path) : 
-                print('Unable to find {:} on staging, aborting :('.format(image_path))
-                continue
-                
+        image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])        
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory,images_information[i]['image_id'])
 
         if os.path.isfile(phot_file) : reduced_mask[i] = True
