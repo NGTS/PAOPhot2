@@ -166,7 +166,11 @@ if __name__=="__main__":
     # Now animate
     for i in tqdm(range(time_array.shape[0]), desc='making animation'):
         fig = plt.figure()
-        im = plt.imshow(data_array[i], animated=True)
+        img_median=np.median(data_array[i])
+        img_rms=1.48*np.median(np.abs(data_array[i]-img_median))
+        zmin = img_median-img_rms*5
+        zmax = img_median+img_rms*9
+        im = plt.imshow(data_array[i], cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax)
         plt.xlabel('X - {:,}'.format(xmin))
         plt.ylabel('Y - {:,}'.format(xmin))
         JD, _, _ = convert_MJD(time_array[i],0,0)
