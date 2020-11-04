@@ -147,8 +147,7 @@ if __name__=="__main__":
     #create the output directory
     output_directory = '{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width)
     output_filename = '{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}.mp4'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width)
-
-    os.system(output_directory)
+    os.system('mkdir -p {:}'.format(output_directory))
 
     # Now animate
     for i in tqdm(range(time_array.shape[0]), desc='making animation'):
