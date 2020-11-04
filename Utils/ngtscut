@@ -108,6 +108,7 @@ if __name__=="__main__":
 
 
     # Now animate
+    fig = plt.figure()
     ims = []
     for i in tqdm(range(time_array.shape[0]), desc='making animation'):
         im = plt.imshow(data_array[i], animated=True)
