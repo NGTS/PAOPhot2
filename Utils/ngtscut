@@ -52,6 +52,20 @@ def arg_parse():
 
     return p.parse_args()
 
+def check_image_location(das_id, action, image_id):
+    # First check if it hasn't been compressed yet and local
+    image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits'.format(das_id, action, image_id)
+    if os.path.isfile(image_path) : return image_path 
+
+    # Now check if local and has been compressed
+    image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits+bz2'.format(das_id, action, image_id)
+    if os.path.isfile(image_path) : return image_path  
+
+    # Now check if its finally on staging
+    image_path = '/ngts/staging/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action,  image_id) # action has been copied to staging
+    if os.path.isfile(image_path) : return image_path  
+
+    return None
 
 def cut_image(data, x, y, width):
     xmin = int(np.clip(Y-width, 0, data.shape[1]))
