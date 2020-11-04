@@ -176,7 +176,7 @@ if __name__=="__main__":
         plt.xlabel('X - {:,}'.format(xmin))
         plt.ylabel('Y - {:,}'.format(xmin))
         JD, _, _ = convert_MJD(time_array[i],0,0)
-        plt.ylabel(JD.datetime.isoformat())
+        plt.title(JD.datetime.isoformat())
         plt.savefig('{:}/{:05}.png'.format(output_directory,i))
         plt.close()
         
