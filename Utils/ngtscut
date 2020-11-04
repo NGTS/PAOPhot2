@@ -33,11 +33,11 @@ def arg_parse():
                    help='The action ID',
                    type=str)
 
-    p.add_argument('X',
+    p.add_argument('x',
                    help='The x position',
                    type=int)
 
-    p.add_argument('Y',
+    p.add_argument('y',
                    help='The Y position',
                    type=int)
 
