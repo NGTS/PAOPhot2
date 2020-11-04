@@ -23,6 +23,7 @@ from astropy.time import Time
 from tqdm import tqdm 
 import matplotlib.animation as animation
 import subprocess as sp
+from contextlib import contextmanager
 
 # Arg parser
 def arg_parse():
