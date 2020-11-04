@@ -67,7 +67,7 @@ def check_image_location(das_id, action, image_id):
 
     return None
 
-def cut_image(data, x, y, width):
+def cut_image(data, X, Y, width):
     xmin = int(np.clip(Y-width, 0, data.shape[1]))
     xmax = int(np.clip(Y+width, 0, data.shape[1]))
     ymin = int(np.clip(X-width, 0, data.shape[0]))
@@ -75,7 +75,7 @@ def cut_image(data, x, y, width):
     if (xmin==xmax) or (ymin==ymax) : return None
     else : return  data[ xmin : xmax,    ymin : ymax   ]
 
-def get_mins(data, x, y, width):
+def get_mins(data, X, Y, width):
     xmin = int(np.clip(Y-width, 0, data.shape[1]))
     ymin = int(np.clip(X-width, 0, data.shape[0]))
     return xmin, ymin
