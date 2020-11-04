@@ -1,0 +1,52 @@
+#!/home/sam/anaconda3/bin/python
+
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+import numpy as np 
+from PAOPhot2.db import PAOPhot_paths
+
+
+output_directoy = '{:}/tls'.format(PAOPhot_paths['PAOPhot2_data_path'])
+
+TOI429 = { 'tic_id' : 259592689, 'name' : 'TOI-429' , 'period' : 30. , 'radius_1' : 0.049179, 'k' : 0.0874, 'b' : 0.614 , 'light_3' : 0., 'fs' : 0., 'fc' : 0.}
+
+JOBS = [TOI429]
+
+if __name__=='__main__':
+    # First, make the output directories
+    os.system('mkdir -p {:}/tls'.format(output_directoy))
+    os.system('mkdir -p {:}/tls/logs'.format(output_directoy))
+    os.system('mkdir -p {:}/tls/jobs'.format(output_directoy))
+
+    # Now make the TLS jobs 
+    for JOB in JOBS : 
+        log_file =  '{:}/tls/logs.log'.format(PAOPhot_paths['PAOPhot2_data_path'], JOB['name'])
+        job_file =  '{:}/tls/jobs.sh'.format(PAOPhot_paths['PAOPhot2_data_path'], JOB['name'])
+
+        # Now check if file exists
+        filename = '{:}/output_lightcurves/TIC-{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], JOB['tic_id'])
+        if not os.path.isfile(filename):
+            print('Cant find {:}'.format(filename))
+            continue
+
+        f = open(job_file, 'w+')
+        cmd = '/usr/local/anaconda3/bin/tls {:} --paophot2 --period {:} --radius_1 {:} --k {:} --b {:} --light_3 --fs {:} --fc {:} --name {:} --save_path {:}/tls'.format(filename,
+                                                                                                                JOB['period'],
+                                                                                                                JOB['radius_1'],
+                                                                                                                JOB['k'],
+                                                                                                                JOB['b'],
+                                                                                                                JOB['light_3'],
+                                                                                                                JOB['fs'],
+                                                                                                                JOB['fc'],
+                                                                                                                JOB['name'],
+                                                                                                                PAOPhot_paths['PAOPhot2_data_path'])
+        
+        f.write('\n#$ -N TLS_{:}'.format(JOB['name']))
+        f.write('\n#$ -o {:}'.format(log_file))
+        f.write('\n#$ -e {:}'.format(log_file))
+        f.write('\n\n{:}'.format(cmd))
+        f.close()
+
+        os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
