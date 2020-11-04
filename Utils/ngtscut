@@ -26,7 +26,7 @@ import matplotlib.animation as animation
 # Set up formatting for the movie files
 Writer = animation.writers['ffmpeg']
 writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800, codec='mpeg4')
-writer = animation.FFMpegFileWriter(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+writer = animation.FFMpegFileWriter(fps=15, metadata=dict(artist='Me'), bitrate=1800, codec='mpeg4')
 
 # Arg parser
 def arg_parse():
