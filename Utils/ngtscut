@@ -8,6 +8,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg' # Add the path of ffmpeg here!!
 import subprocess
 import argparse, os, sys
 from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
@@ -21,6 +22,10 @@ import numpy as np
 from astropy.time import Time
 from tqdm import tqdm 
 import matplotlib.animation as animation
+
+# Set up formatting for the movie files
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
 
 
 # Arg parser
@@ -119,4 +124,4 @@ if __name__=="__main__":
         ims.append([im])
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,repeat_delay=1000)
-    ani.save('{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}.mp4'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width))
+    ani.save('{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}.mp4'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width), writer=writer)
