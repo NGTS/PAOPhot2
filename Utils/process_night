@@ -6,7 +6,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 # Imports
 import os, sys, numpy as np
-from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi , PAOPhot_paths
+from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi , PAOPhot_paths, get_action_info
 from astropy.time import Time, TimeDelta
 from astropy import units as u 
 
