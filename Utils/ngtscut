@@ -22,11 +22,7 @@ import numpy as np
 from astropy.time import Time
 from tqdm import tqdm 
 import matplotlib.animation as animation
-
-# Set up formatting for the movie files
-Writer = animation.writers['ffmpeg']
-writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800, codec='mpeg4')
-writer = animation.FFMpegFileWriter(fps=15, metadata=dict(artist='Me'), bitrate=1800, codec='libx264')
+import subprocess as sp
 
 # Arg parser
 def arg_parse():
@@ -85,6 +81,43 @@ def get_mins(data, X, Y, width):
     ymin = int(np.clip(X-width, 0, data.shape[0]))
     return xmin, ymin
 
+
+
+
+def generate_movie(image_directory, output_filename, fps=15, use_mencoder=False):
+    '''
+    Render a mp4 movie from a directory of png files. Use ffmpeg for this.
+    :param image_directory:
+        Directory of png files
+    :param output_filename:
+        Resulting movie filename
+    :param fps:
+        Frames per second of the final movie
+    :param use_mencoder:
+        Use mencoder instead of ffmpeg
+    '''
+    output_filename = os.path.realpath(output_filename)
+
+    n_cpu = 4
+    with change_directory(image_directory):
+        if use_mencoder:
+            cmd = list(map(str, [
+                'mencoder', 'mf://*.png', '-mf',
+                'w=800:h=600:fps={}:type=png'.format(fps), '-ovc', 'x264',
+                '-x264encopts',
+                'crf=18:nofast_pskip:nodct_decimate:nocabac:global_header:threads={}'.format(
+                    n_cpu), '-of', 'lavf', '-lavfopts', 'format=mp4', '-o',
+                output_filename
+            ]))
+        else:
+            cmd = list(map(str, ['ffmpeg', '-y', '-framerate', fps, '-pattern_type',
+                                 'glob', '-i', '*.png', '-c:v', 'mpeg4', '-b:v', '16M',
+                                 '-threads', n_cpu, output_filename]))
+
+        logger.debug('Running command %s', ' '.join(cmd))
+        sp.check_call(cmd)
+
+
 # Main loop
 if __name__=="__main__":
     # First, pars the arguments
@@ -111,17 +144,25 @@ if __name__=="__main__":
         count+=1
     xmin, ymin = get_mins(image_data, args.x, args.y, args.width) 
 
+    #create the output directory
+    output_directory = '{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width)
+    output_filename = '{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}.mp4'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width)
+
+    os.system(output_directory)
 
     # Now animate
-    fig = plt.figure()
-    ims = []
     for i in tqdm(range(time_array.shape[0]), desc='making animation'):
+        fig = plt.figure()
         im = plt.imshow(data_array[i], animated=True)
         plt.xlabel('X - {:,}'.format(xmin))
         plt.ylabel('Y - {:,}'.format(xmin))
         JD, _, _ = convert_MJD(time_array[i],0,0)
         plt.ylabel(JD.datetime.isoformat())
-        ims.append([im])
+        plt.savefig('{:}/{:05}.png'.format(output_directory,i))
+        plt.close()
+        
+    # Now animate
+    generate_movie(output_directory, output_filename, fps=15, use_mencoder=False)
 
-    ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,repeat_delay=1000)
-    ani.save('{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}.mp4'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width), writer=writer)
+    # Now clean up 
+    os.system('rm -rf {:}'.format(output_directory))
