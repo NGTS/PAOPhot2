@@ -42,15 +42,17 @@ else:
                     if actions[i]['TICID']!= -99 : 
                         print('\tFound {:} [TIC-{:}]'.format(actions[i]['campaign'].split('_')[0], actions[i]['TICID']))
                         mask[i] = True
+
+            action_details = get_action_info(actions[i]['action_id'])
+            actions[i]['camera_id'] = action_details['camera_id']
+            actions[i]['das_id'] = action_details['das_id']
+            actions[i]['host'] = host = "ngts-par-das-{:02d}".format(actions[i]['das_id'])
     actions = actions[mask]
 
     if USE_HOSTS:
         # we need to get the dasID for the actions
         for i in range(len(actions)):
-            action_details = get_action_info(actions[i]['action_id'])
-            actions[i]['camera_id'] = action_details['camera_id']
-            actions[i]['das_id'] = action_details['das_id']
-            actions[i]['host'] = host = "ngts-par-das-{:02d}".format(actions[i]['das_id'])
+
 
     print('Making jobs for actions')
     for action in actions[:]:
