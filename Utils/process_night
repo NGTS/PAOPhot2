@@ -61,7 +61,7 @@ else:
         f.write('\n#$ -N PAOPhot_action{:}'.format(action['action_id']))
         f.write('\n#$ -o {:}'.format(log_file))
         f.write('\n#$ -e {:}'.format(log_file))
-        if USE_HOSTS : f.write('\n#$ -l h={}'.format(actions[i]['host'])) # make sure the job goes on the right machine
+        if USE_HOSTS : f.write('\n#$ -l h={}'.format(action['host'])) # make sure the job goes on the right machine
 
         #f.write('\nexport LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/wcslib/lib')
         f.write('\n\nexport LD_LIBRARY_PATH=/usr/local/telescope/CSIMC/icc/libc5:/usr/local/telescope/lib::/usr/local/lib:/usr/local/wcslib/lib')
