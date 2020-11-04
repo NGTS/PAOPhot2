@@ -4,17 +4,33 @@
 import os
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
+# Imports
 import os, sys, numpy as np
 from PAOPhot2.db import get_actions_for_night , get_ticid_from_toi , PAOPhot_paths
+from astropy.time import Time, TimeDelta
+from astropy import units as u 
 
-
-
+# Now lets get the night and check it against today
+# If its last night, we need to set a flag
+# as data would be on the local dases and not on staging.
 night = sys.argv[1]
+today = Time.now()
+yesterday = today - TimeDelta(1*u.day)
+if yesterday.datetime.isoformat()[:10]==night : 
+    USE_HOSTS=True
+    print('Date given is yesterday, ensuring jobs go to correct as machine')
+else:                                           USE_HOSTS=False
+
+
+
+
 actions = np.array(get_actions_for_night(night))
+
 print('Found {:,} actions'.format(len(actions)))
 if len(actions)==0 :
     print('Finished.')
 else:
+    # First, we need to search for ones that can be reduced i.e. with campaign names starting with TOI-XXXX or TIC-XXXXXXX
     mask = np.zeros(len(actions), dtype = np.bool)
     for i in range(len(actions)):
             if actions[i]['campaign'][:3] =='TIC':
@@ -26,8 +42,16 @@ else:
                     if actions[i]['TICID']!= -99 : 
                         print('\tFound {:} [TIC-{:}]'.format(actions[i]['campaign'].split('_')[0], actions[i]['TICID']))
                         mask[i] = True
-
     actions = actions[mask]
+
+    if USE_HOSTS:
+        # we need to get the dasID for the actions
+        for i in range(len(actions)):
+            action_details = get_action_info(actions[i]['action_id'])
+            actions[i]['camera_id'] = action_details['camera_id']
+            actions[i]['das_id'] = action_details['das_id']
+            actions[i]['host'] = host = "ngts-par-das-{:02d}".format(actions[i]['das_id'])
+
     print('Making jobs for actions')
     for action in actions[:]:
         job_file =  '{:}/jobs/PAOPhot_action{:}.sh'.format(PAOPhot_paths['PAOPhot2_data_path'], action['action_id'])
@@ -40,8 +64,10 @@ else:
         f.write('\n#$ -N PAOPhot_action{:}'.format(action['action_id']))
         f.write('\n#$ -o {:}'.format(log_file))
         f.write('\n#$ -e {:}'.format(log_file))
+        if USE_HOSTS : f.write('\n#$ -l h={}'.format(actions[i]['host'])) # make sure the job goes on the right machine
+
         #f.write('\nexport LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/wcslib/lib')
-        f.write('\nexport LD_LIBRARY_PATH=/usr/local/telescope/CSIMC/icc/libc5:/usr/local/telescope/lib::/usr/local/lib:/usr/local/wcslib/lib')
+        f.write('\n\nexport LD_LIBRARY_PATH=/usr/local/telescope/CSIMC/icc/libc5:/usr/local/telescope/lib::/usr/local/lib:/usr/local/wcslib/lib')
         #$((NSLOTS/2))
         cmd = '/usr/local/anaconda3/bin/reduce_action {:}  --threads 1 --target_ticid {:} --astr_net_tmp $TMPDIR'.format(action['action_id'], action['TICID'])
         f.write('\n\n{:}'.format(cmd))
