@@ -100,7 +100,7 @@ if __name__=="__main__":
     for i in tqdm(range(len(images_information))[::args.frame_skip], desc='Gathering data'):
         image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
         image_data = fits.open(image_path)[0].data        
-        data_array[i] = cut_image(data, args.x, args.y, args.width)
+        data_array[i] = cut_image(image_data, args.x, args.y, args.width)
         time_array[i] = images_information[i]['mjd']
     xmin, ymin = get_mins(image_data, args.x, args.y, args.width) 
 
