@@ -1,0 +1,104 @@
+#!/home/sam/anaconda3/bin/python
+
+# To avoid OpenBLAS error
+import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+# Imports
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import subprocess
+import argparse, os, sys
+from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
+#from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
+from PAOPhot2.time_conversion import convert_MJD
+from PAOPhot2.plot_functions import plot_target_night
+from astropy.io import fits 
+from multiprocessing import Pool 
+from astropy.table import Table 
+import numpy as np 
+from astropy.time import Time
+from tqdm import tqdm 
+import matplotlib.animation as animation
+
+
+# Arg parser
+def arg_parse():
+    """
+    Parse the command line arguments
+    """
+    p = argparse.ArgumentParser("Make frame movies for action.")
+    p.add_argument('action',
+                   help='The action ID',
+                   type=str)
+
+    p.add_argument('X',
+                   help='The x position',
+                   type=int)
+
+    p.add_argument('Y',
+                   help='The Y position',
+                   type=int)
+
+
+    p.add_argument('width',
+                   help='The width',
+                   type=int)
+
+    p.add_argument('frame_skip',
+                   help='Plot every [frame_skip] frame',
+                   type=int, default = 100)
+
+    return p.parse_args()
+
+
+def cut_image(data, x, y, width):
+    xmin = int(np.clip(Y-width, 0, data.shape[1]))
+    xmax = int(np.clip(Y+width, 0, data.shape[1]))
+    ymin = int(np.clip(X-width, 0, data.shape[0]))
+    ymax = int(np.clip(X+width, 0, data.shape[0]))
+    if (xmin==xmax) or (ymin==ymax) : return None
+    else : return  data[ xmin : xmax,    ymin : ymax   ]
+
+def get_mins(data, x, y, width):
+    xmin = int(np.clip(Y-width, 0, data.shape[1]))
+    ymin = int(np.clip(X-width, 0, data.shape[0]))
+    return xmin, ymin
+
+# Main loop
+if __name__=="__main__":
+    # First, pars the arguments
+    args = arg_parse()
+
+    # Now get an image list
+    images_information = get_images_information_for_action(args.action)
+    action_info = get_action_info(args.action) 
+    print('\t\tFound information for {:,} science images'.format(len(images_information)))
+
+    # Now allocate arrays
+    image_path = check_image_location(action_info['das_id'], args.action, images_information[0]['image_id']) 
+    image_data = fits.open(image_path)[0].data        
+    cut_frame = cut_image(image_data, args.x, args.y, args.width)
+    data_array = np.zeros((len(images_information), cut_frame.shape[0], cut_frame.shape[1]))[::frame_skip]
+    time_array = np.zeros(cut_frame.shape[0])
+
+    for i in tqdm(range(len(images_information))[::frame_skip], desc='Gathering data'):
+        image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
+        image_data = fits.open(image_path)[0].data        
+        data_array[i] = cut_image(data, args.x, args.y, args.width)
+        time_array[i] = images_information[i]['mjd']
+    xmin, ymin = get_mins(image_data, args.x, args.y, args.width) 
+
+
+    # Now animate
+    ims = []
+    for i in tqdm(range(time_array.shape[0]), desc='making animation'):
+        im = plt.imshow(data_array[i], animated=True)
+        plt.xlabel('X - {:,}'.format(xmin))
+        plt.ylabel('Y - {:,}'.format(xmin))
+        plt.ylabel(Time(time_array[i], format='jd').datetime.isoformat())
+        ims.append([im])
+
+    ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,repeat_delay=1000)
+    ani.save('{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}.mp4'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width))
