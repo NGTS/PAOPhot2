@@ -73,5 +73,5 @@ else:
         os.system('/usr/local/sge/bin/lx-amd64/qsub -pe mpi 4-8 {:}'.format(job_file))
 
         print('\tSubmitted job for TIC-{:} corrosponding to action {:} [Field : {:} -- Camera : {:} -- Nimages {:,}]'.format(action['TICID'], action['action_id'], action['field'], action['camera_id'], action['num_images']), end = '')
-        if USE_HOSTS : print(' on camera {:} -> {:}'.format(actions[i]['camera_id'], actions[i]['host']))
+        if USE_HOSTS : print(' on camera {:} -> {:}'.format(actions[i]['camera_id'], action['host']))
         else : print('')
