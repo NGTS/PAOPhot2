@@ -114,7 +114,8 @@ if __name__=="__main__":
         im = plt.imshow(data_array[i], animated=True)
         plt.xlabel('X - {:,}'.format(xmin))
         plt.ylabel('Y - {:,}'.format(xmin))
-        plt.ylabel(Time(time_array[i], format='jd').datetime.isoformat())
+        JD, _, _ = convert_MJD(time_array[i],0,0)
+        plt.ylabel(JD.datetime.isoformat())
         ims.append([im])
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True,repeat_delay=1000)
