@@ -129,7 +129,6 @@ def generate_movie(image_directory, output_filename, fps=15, use_mencoder=False)
                                  'glob', '-i', '*.png', '-c:v', 'mpeg4', '-b:v', '16M',
                                  '-threads', n_cpu, output_filename]))
 
-        logger.debug('Running command %s', ' '.join(cmd))
         sp.check_call(cmd)
 
 
