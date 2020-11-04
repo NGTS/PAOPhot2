@@ -221,7 +221,7 @@ if __name__=="__main__":
     print('\tImage reduction complete. Counting number of photfiles. ')
     reduced_mask = np.zeros(len(images_information), dtype=np.bool)
     for i in range(len(images_information))[:]:
-        image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits.bz2'.format(action_info['das_id'], 
+        image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits'.format(action_info['das_id'], 
                                                                                         args.action, 
                                                                                         images_information[i]['image_id'])
 
