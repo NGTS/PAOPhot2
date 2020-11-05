@@ -137,6 +137,35 @@ def generate_movie(image_directory, output_filename, fps=15, use_mencoder=False)
         sp.check_call(cmd)
 
 
+def worker(i)
+    # load the image data
+    image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
+    image_data = fits.open(image_path)[0].data 
+    JD, _, _ = convert_MJD(images_information[i]['mjd'],0,0)
+
+    # Get image scaling
+    img_median=np.median(image_data)
+    img_rms=1.48*np.median(np.abs(image_data-img_median))
+    zmin = img_median-img_rms*5
+    zmax = img_median+img_rms*9
+
+    # Plot image
+    f = plt.figure() 
+    ax = plt.gca()
+    ix0, ix1, iy0, iy1 = get_lims(image_data, args.x, args.y, args.width)
+    im = plt.imshow(image_data, cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
+
+    # Now plot circle aperture 
+    c=Circle((args.x, args.y), radius=3., color='k', fill=False)
+    ax.add_artist(c)
+
+    # Now format plot
+    title_text = 'Action : {:}\nDAS : {:} Camera {:}\n{:}'.format(args.action, action_info['das_id'] , action_info['camera_id'] , JD.datetime.isoformat() )
+    ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(ix0, ix1) , ylim = (iy0, iy1))
+    plt.tight_layout()
+    plt.savefig('{:}/{:05}.png'.format(output_directory,i))
+    plt.close()
+
 # Main loop
 if __name__=="__main__":
     # First, pars the arguments
@@ -154,34 +183,12 @@ if __name__=="__main__":
 
     # Now make the plots
     for i in tqdm(range(len(images_information))[::args.frame_skip], desc='Gathering data'):
-        # load the image data
-        image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
-        image_data = fits.open(image_path)[0].data 
-        JD, _, _ = convert_MJD(images_information[i]['mjd'],0,0)
 
-        # Get image scaling
-        img_median=np.median(image_data)
-        img_rms=1.48*np.median(np.abs(image_data-img_median))
-        zmin = img_median-img_rms*5
-        zmax = img_median+img_rms*9
-
-        # Plot image
-        f = plt.figure() 
-        ax = plt.gca()
-        ix0, ix1, iy0, iy1 = get_lims(image_data, args.x, args.y, args.width)
-        im = plt.imshow(image_data, cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
-
-        # Now plot circle aperture 
-        c=Circle((args.x, args.y), radius=3., color='k', fill=False)
-        ax.add_artist(c)
-
-        # Now format plot
-        title_text = 'Action : {:}\nDAS : {:} Camera {:}\n{:}'.format(args.action, action_info['das_id'] , action_info['camera_id'] , JD.datetime.isoformat() )
-        ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(ix0, ix1) , ylim = (iy0, iy1))
-        plt.tight_layout()
-        plt.savefig('{:}/{:05}.png'.format(output_directory,i))
-        plt.close()
-        
+    pool = Pool(4)
+    for _ in tqdm(pool.imap_unordered(worker, range(len(images_information))[::args.frame_skip]), total=len(images_information[::args.frame_skip])) : pass
+    pool.close()
+    pool.join() 
+    
     # Now animate
     generate_movie(output_directory, output_filename, fps=15, use_mencoder=False)
 
