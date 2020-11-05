@@ -137,7 +137,7 @@ def generate_movie(image_directory, output_filename, fps=15, use_mencoder=False)
         sp.check_call(cmd)
 
 
-def worker(i)
+def worker(i):
     # load the image data
     image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
     image_data = fits.open(image_path)[0].data 
@@ -182,10 +182,8 @@ if __name__=="__main__":
     os.system('mkdir -p {:}'.format(output_directory))
 
     # Now make the plots
-    for i in tqdm(range(len(images_information))[::args.frame_skip], desc='Gathering data'):
-
     pool = Pool(4)
-    for _ in tqdm(pool.imap_unordered(worker, range(len(images_information))[::args.frame_skip]), total=len(images_information[::args.frame_skip])) : pass
+    for _ in tqdm(pool.imap_unordered(worker, range(len(images_information))[::args.frame_skip]), total=len(images_information[::args.frame_skip]),  desc='Making plots') : pass
     pool.close()
     pool.join() 
     
