@@ -169,7 +169,7 @@ if __name__=="__main__":
         f = plt.figure() 
         ax = plt.gca()
         ix0, ix1, iy0, iy1 = get_lims(image_data, args.x, args.y, args.width)
-        im = plt.imshow(image_data, cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal', extent=(ix0, ix1, iy0, iy1))
+        im = plt.imshow(image_data, cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
 
         # Now plot circle aperture 
         c=Circle((args.x, args.y), radius=3., color='k', fill=False)
@@ -177,7 +177,7 @@ if __name__=="__main__":
 
         # Now format plot
         title_text = 'Action : {:}\nDAS : {:} Camera {:}\n{:}'.format(args.action, action_info['das_id'] , action_info['camera_id'] , JD.datetime.isoformat() )
-        ax.set(xlabel = 'X', ylabel = 'Y', title = title_text)
+        ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(ix0, ix1) , ylim = (iy0, iy1))
         plt.savefig('{:}/{:05}.png'.format(output_directory,i))
         plt.close()
         
