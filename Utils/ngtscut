@@ -40,11 +40,11 @@ def arg_parse():
 
     p.add_argument('x',
                    help='The x position',
-                   type=int)
+                   type=float)
 
     p.add_argument('y',
                    help='The Y position',
-                   type=int)
+                   type=float)
 
 
     p.add_argument('width',
