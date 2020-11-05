@@ -298,4 +298,10 @@ if __name__=="__main__":
     print('\t\t' + cmd)
     #os.system(cmd)
     errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1hr timeout
-    print('Finished.')
+
+
+    # Now lets copy the action summaries to the summary directory
+    cmd = 'cp {:}/*.png {:}/action_summaries'.format(output_directory, PAOPhot_paths['PAOPhot2_data_path'])
+    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1hr timeout
+
+    print('finished.')

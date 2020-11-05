@@ -17,6 +17,7 @@ from scipy.stats import sem
 from astropy.time import Time
 from astropy.stats import sigma_clip
 from PAOPhot2.mag_conversion import convertFluxToMags
+import subprocess 
 
 # Arg parser
 def arg_parse():
@@ -365,6 +366,13 @@ if __name__=="__main__":
     plt.close()
 
 
+    # Now make the ngtscut call
+    cmd = '/usr/local/anaconda3/bin/ngtscut {:} {:} {:} 30 1'.format(args.action,
+                                                                        np.median(photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])]),
+                                                                        np.median(photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])]))
+    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1hr timeout
+
+    print('Finished.')
 
 
     exit()
