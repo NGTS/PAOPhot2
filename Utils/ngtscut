@@ -10,6 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg' # Add the path of ffmpeg here!!
 import matplotlib.cm as cm
+from matplotlib.patches import Circle
 
 import subprocess
 import argparse, os, sys
@@ -79,10 +80,12 @@ def cut_image(data, X, Y, width):
     if (xmin==xmax) or (ymin==ymax) : return None
     else : return  data[ xmin : xmax,    ymin : ymax   ]
 
-def get_mins(data, X, Y, width):
+def get_lims(data, X, Y, width):
     xmin = int(np.clip(Y-width, 0, data.shape[1]))
+    xmax = int(np.clip(Y+width, 0, data.shape[1]))
     ymin = int(np.clip(X-width, 0, data.shape[0]))
-    return xmin, ymin
+    ymax = int(np.clip(X+width, 0, data.shape[0]))
+    return xmin, xmax , ymin , ymax
 
 
 
@@ -144,39 +147,37 @@ if __name__=="__main__":
     action_info = get_action_info(args.action) 
     print('\t\tFound information for {:,} science images'.format(len(images_information)))
 
-    # Now allocate arrays
-    image_path = check_image_location(action_info['das_id'], args.action, images_information[0]['image_id']) 
-    image_data = fits.open(image_path)[0].data        
-    cut_frame = cut_image(image_data, args.x, args.y, args.width)
-    data_array = np.zeros((len(images_information), cut_frame.shape[0], cut_frame.shape[1]))[::args.frame_skip]
-    time_array = np.zeros(data_array.shape[0])
-
-    count=0
-    for i in tqdm(range(len(images_information))[::args.frame_skip], desc='Gathering data'):
-        image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
-        image_data = fits.open(image_path)[0].data        
-        data_array[count] = cut_image(image_data, args.x, args.y, args.width)
-        time_array[count] = images_information[i]['mjd']
-        count+=1
-    xmin, ymin = get_mins(image_data, args.x, args.y, args.width) 
-
     #create the output directory
     output_directory = '{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width)
     output_filename = '{:}/ngtscut/action{:}_X_{:}_Y_{:}_W_{:}.mp4'.format(PAOPhot_paths['PAOPhot2_data_path'] ,args.action, args.x, args.y, args.width)
     os.system('mkdir -p {:}'.format(output_directory))
 
-    # Now animate
-    for i in tqdm(range(time_array.shape[0]), desc='making animation'):
-        fig = plt.figure()
-        img_median=np.median(data_array[i])
-        img_rms=1.48*np.median(np.abs(data_array[i]-img_median))
+    # Now make the plots
+    for i in tqdm(range(len(images_information))[::args.frame_skip], desc='Gathering data'):
+        # load the image data
+        image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
+        image_data = fits.open(image_path)[0].data 
+        JD, _, _ = convert_MJD(images_information[i]['mjd'],0,0)
+
+        # Get image scaling
+        img_median=np.median(image_data)
+        img_rms=1.48*np.median(np.abs(image_data-img_median))
         zmin = img_median-img_rms*5
         zmax = img_median+img_rms*9
-        im = plt.imshow(data_array[i], cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax)
-        plt.xlabel('X - {:,}'.format(xmin))
-        plt.ylabel('Y - {:,}'.format(xmin))
-        JD, _, _ = convert_MJD(time_array[i],0,0)
-        plt.title(JD.datetime.isoformat())
+
+        # Plot image
+        f = plt.figure() 
+        ax = plt.gca()
+        ix0, ix1, iy0, iy1 = get_lims(image_data, args.x, args.y, args.width)
+        im = plt.imshow(image_data, cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal', extent=(ix0, ix1, iy0, iy1))
+
+        # Now plot circle aperture 
+        c=Circle((args.x, args.y), radius=3., color='k', fill=False)
+        ax.add_artist(c)
+
+        # Now format plot
+        title_text = 'Action : {:}\nDAS : {:} Camera {:}\n{:}'.format(args.action, action_info['das_id'] , action_info['camera_id'] , JD.datetime.isoformat() )
+        ax.set(xlabel = 'X', ylabel = 'Y', title = title_text)
         plt.savefig('{:}/{:05}.png'.format(output_directory,i))
         plt.close()
         
