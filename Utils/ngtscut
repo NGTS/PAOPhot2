@@ -178,6 +178,7 @@ if __name__=="__main__":
         # Now format plot
         title_text = 'Action : {:}\nDAS : {:} Camera {:}\n{:}'.format(args.action, action_info['das_id'] , action_info['camera_id'] , JD.datetime.isoformat() )
         ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(ix0, ix1) , ylim = (iy0, iy1))
+        plt.tight_layout()
         plt.savefig('{:}/{:05}.png'.format(output_directory,i))
         plt.close()
         
