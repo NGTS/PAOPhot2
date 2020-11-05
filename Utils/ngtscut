@@ -182,7 +182,7 @@ if __name__=="__main__":
     os.system('mkdir -p {:}'.format(output_directory))
 
     # Now make the plots
-    pool = Pool(4)
+    pool = Pool(8)
     for _ in tqdm(pool.imap_unordered(worker, range(len(images_information))[::args.frame_skip]), total=len(images_information[::args.frame_skip]),  desc='Making plots') : pass
     pool.close()
     pool.join() 
