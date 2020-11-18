@@ -45,7 +45,7 @@ else:
             elif actions[i]['campaign'][:6] =='WASP18':
                     actions[i]['TICID'] = '100100827'
                     print('\tFound {:} [TIC-{:}]'.format(actions[i]['campaign'].split('_')[0], actions[i]['TICID']))
-                    mask[i] = False
+                    mask[i] = True
 
 
             action_details = get_action_info(actions[i]['action_id'])
