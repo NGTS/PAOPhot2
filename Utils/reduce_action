@@ -82,6 +82,8 @@ def photometry_worker(i):
             print('Unable to find image {:}'.format(image_path))
             return 
 
+    if os.path.isfile('{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])) : return 
+
     # Create the WCSPhot command
     cmd = '/usr/local/anaconda3/bin/python {:}/wcsphotpipe.py {:} {:} {:} {:} --outdir {:} --dont_save_image'.format(PAOPhot_paths['WCSPhotpipe_path'],
                                                                                             image_path,
@@ -91,7 +93,7 @@ def photometry_worker(i):
                                                                                             output_directory)
     print(cmd) 
     #os.system(cmd)
-    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=60)
+    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=60*5)
 
     # Now compress this 
     cmd = 'gzip -fv {:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])

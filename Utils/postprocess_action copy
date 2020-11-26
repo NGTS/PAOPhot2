@@ -78,15 +78,15 @@ if __name__=="__main__":
 
     # Now lets get the flux
     print('Extracting target and comparison fluxes')
-    target_flux = np.array(photometry_file['TIC-{:}_Aper_flux_50'.format(target_row['tic_id'][0])])
-    target_flux_err = np.array(photometry_file['TIC-{:}_Aper_flux_50_err'.format(target_row['tic_id'][0])])
+    target_flux = np.array(photometry_file['TIC-{:}_Aper_flux_3'.format(target_row['tic_id'][0])])
+    target_flux_err = np.array(photometry_file['TIC-{:}_Aper_flux_3_err'.format(target_row['tic_id'][0])])
 
     comparison_flux = np.zeros(len(photometry_file))
     comparison_flux_err = np.zeros(len(photometry_file))
 
     for i in range(len(comparison_table)) : 
-        comparison_flux = comparison_flux + photometry_file['TIC-{:}_Aper_flux_50'.format(comparison_table['tic_id'][i])]
-        comparison_flux_err = comparison_flux_err + photometry_file['TIC-{:}_Aper_flux_50_err'.format(comparison_table['tic_id'][i])]**2
+        comparison_flux = comparison_flux + photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])]
+        comparison_flux_err = comparison_flux_err + photometry_file['TIC-{:}_Aper_flux_3_err'.format(comparison_table['tic_id'][i])]**2
     comparison_flux_err = np.sqrt(comparison_flux_err)
 
 
@@ -130,7 +130,7 @@ if __name__=="__main__":
                     np.array(photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])]) ,  np.array(photometry_file['TIC-{:}_X_coordinate_centroid'.format(target_row['tic_id'][0])]), np.array(photometry_file['TIC-{:}_X_coordinate_flux_centroid'.format(target_row['tic_id'][0])]),
                     np.array(photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])]) ,  np.array(photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])]), np.array(photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(target_row['tic_id'][0])]),
                     np.array(photometry_file['TIC-{:}_Sky_level'.format(target_row['tic_id'][0])]) ,  np.array(photometry_file['TIC-{:}_Sky_level_err'.format(target_row['tic_id'][0])]),
-                    np.array(photometry_file['TIC-{:}_Aper_flux_50_max'.format(target_row['tic_id'][0])]) ,
+                    np.array(photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])]) ,
                     detrended_flux, detrended_flux_err]).T
     header = ['JD', 'BJD', 'HJD',
               'AIRMASS',
@@ -140,7 +140,7 @@ if __name__=="__main__":
               'MAX_PIXEL_COUNT_IN_APERTURE',
               'DETRENDED_FLUX', 'DETRENDED_FLUX_ERR']
     header = ' '.join(header)
-    #np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp, header=header)
+    np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp, header=header)
 
 
 
@@ -177,9 +177,9 @@ if __name__=="__main__":
     #t_skyflux_bin, f_skyflux_bin, _ = lc_bin(np.array(photometry_file['JD']), photometry_file['TIC-{:}_Sky_level'.format(target_row['tic_id'][0])], 0.5/24/6)
     #ax_sky.plot(t_skyflux_bin-time_offset, f_skyflux_bin, 'k')
 
-    ax_maxflux.plot(time-time_offset,photometry_file['TIC-{:}_Aper_flux_50_max'.format(target_row['tic_id'][0])], 'k', alpha = 0.2)
+    ax_maxflux.plot(time-time_offset,photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])], 'k', alpha = 0.2)
     ax_maxflux.set(ylabel = 'Max counts', xlabel='JD - {:,}'.format(time_offset))
-    t_maxflux_bin, f_maxflux_bin, _ = lc_bin(np.array(photometry_file['JD']), photometry_file['TIC-{:}_Aper_flux_50_max'.format(target_row['tic_id'][0])], 0.5/24/6)
+    t_maxflux_bin, f_maxflux_bin, _ = lc_bin(np.array(photometry_file['JD']), photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])], 0.5/24/6)
     ax_maxflux.plot(t_maxflux_bin-time_offset, f_maxflux_bin, 'k')
 
     ax_x.scatter(time-time_offset,photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])], c='b', s=2, alpha = 0.2, label='WCS positon' )  
@@ -342,19 +342,19 @@ if __name__=="__main__":
                                 photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(target_row['tic_id'][0])],
-                                photometry_file['TIC-{:}_Aper_flux_50_max'.format(target_row['tic_id'][0])])
+                                photometry_file['TIC-{:}_Aper_flux_3_max'.format(target_row['tic_id'][0])])
             text = 'TIC-{:}\nTmag = {:.3f}'.format(target_row['tic_id'][0], target_row['Tmag'][0])
             axs[i,0].text(-0.8,0.5, text, size=17, ha="center", transform=axs[i,0].transAxes)
 
         else:
-            summary_3_plot_func(axs[i], time, time_offset,  photometry_file['TIC-{:}_Aper_flux_50'.format(FP_table['tic_id'][i-1])],  photometry_file['TIC-{:}_Aper_flux_50_err'.format(FP_table['tic_id'][i-1])], comparison_flux, comparison_flux_err,
+            summary_3_plot_func(axs[i], time, time_offset,  photometry_file['TIC-{:}_Aper_flux_3'.format(FP_table['tic_id'][i-1])],  photometry_file['TIC-{:}_Aper_flux_3_err'.format(FP_table['tic_id'][i-1])], comparison_flux, comparison_flux_err,
                                 photometry_file['AIRMASS'], photometry_file['TIC-{:}_X_coordinate'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_X_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_X_coordinate_flux_centroid'.format(FP_table['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_Y_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(FP_table['tic_id'][0])],
-                                photometry_file['TIC-{:}_Aper_flux_50_max'.format(FP_table['tic_id'][i-1])])  
+                                photometry_file['TIC-{:}_Aper_flux_3_max'.format(FP_table['tic_id'][i-1])])  
 
             text = 'TIC-{:}\nTmag = {:.3f}\n$\Delta$Tmag = {:.3f}\n$\Delta$ pix = {:.2f}\n    = {:.0f}"'.format(FP_table['tic_id'][i-1],
                                                                      FP_table['Tmag'][i-1],
