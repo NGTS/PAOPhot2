@@ -155,11 +155,11 @@ def worker(i):
     im = plt.imshow(image_data, cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
 
     # Now plot circle aperture 
-    c=Circle((args.x, args.y), radius=3., color='k', fill=False)
+    c=Circle((args.y, args.x), radius=3., color='k', fill=False)
     ax.add_artist(c)
-    c=Circle((args.x, args.y), radius=5., color='k', fill=False)
+    c=Circle((args.y, args.x), radius=5., color='k', fill=False)
     ax.add_artist(c)
-    c=Circle((args.x, args.y), radius=8., color='k', fill=False)
+    c=Circle((args.y, args.x), radius=8., color='k', fill=False)
     ax.add_artist(c)
 
     # Now format plot
@@ -173,8 +173,8 @@ def worker(i):
 if __name__=="__main__":
     # First, pars the arguments
     args = arg_parse()
-    args.x = 2048 - args.x
-    
+    args.y = 2048 - args.y
+
     # Now get an image list
     images_information = get_images_information_for_action(args.action)
     action_info = get_action_info(args.action) 
