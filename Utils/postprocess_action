@@ -6,7 +6,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 # Imports
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
