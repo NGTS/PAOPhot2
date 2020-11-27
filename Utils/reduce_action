@@ -16,7 +16,7 @@ from PAOPhot2.time_conversion import convert_MJD
 from PAOPhot2.plot_functions import plot_target_night
 from astropy.io import fits 
 from multiprocessing import Pool 
-from astropy.table import Table 
+from astropy.table import Table , Column
 import numpy as np 
 from astropy.time import Time
 
@@ -284,7 +284,7 @@ if __name__=="__main__":
     table_dtype = np.tile(float,len(table_header))
     total_table = Table(names=table_header, dtype=table_dtype) 
 
-    for i in range(len(images_information))[:]:
+    for i in range(len(images_information))[:10]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print('\t\tCollecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
         phot_table = Table.read(phot_file)
@@ -305,9 +305,9 @@ if __name__=="__main__":
         total_table.add_row(data)
 
     # Now add the Paladin FWHM info 
-    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.psf_med_fwhm) , name = 'PALADIN_PSF_MED_FWHM' ), index=4)
-    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.psf_rms_fwhm) , name = 'PALADIN_PSF_RMS_FWHM' ), index=5)
-    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.focus_gauge) , name = 'PALADIN_FOCUS_GAUGE' ), index=6)
+    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.psf_med_fwhm, left=paladin_fwhm.psf_med_fwhm[0], right = paladin_fwhm.psf_med_fwhm[-1]) , name = 'PALADIN_PSF_MED_FWHM' ), index=4)
+    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.psf_rms_fwhm, left=paladin_fwhm.psf_rms_fwhm[0], right = paladin_fwhm.psf_rms_fwhm[-1]) , name = 'PALADIN_PSF_RMS_FWHM' ), index=5)
+    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.focus_gauge, left=paladin_fwhm.focus_gauge[0], right = paladin_fwhm.focus_gauge[-1]) , name = 'PALADIN_FOCUS_GAUGE' ), index=6)
 
     print('\tSaving collected photometry')
     date = Time(np.array(total_table['JD'])[0], format='jd').datetime.isoformat()[:10]
