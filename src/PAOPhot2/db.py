@@ -102,7 +102,7 @@ def get_action_info(action_id):
     the action_summary_log table
     """
     qry = """
-        SELECT asl.action_id, asl.field, sfi.ra_target_deg, sfi.dec_target_deg,
+        SELECT asl.action_id, asl.field, asl.actual_start_utc, asl.actual_end_utc, sfi.ra_target_deg, sfi.dec_target_deg,
         al.camera_id, hwn.das_id
         FROM action_summary_log AS asl
         LEFT JOIN scheduler_field_info AS sfi ON asl.field = sfi.field
