@@ -104,14 +104,12 @@ def photometry_worker(i):
 from astropy.time import Time, TimeDelta
 from astropy import units as u
 class paladin_psf_interpolater():
-    def __init__(self, datetime_string, camera_id=801):
-        t_ref = Time(datetime_string, format='isot', scale='utc')
-        #today = t_ref.__str__()[:10]
-        yesterday = (t_ref - TimeDelta(1*u.day)).__str__()[:10]
-        tommorow = (t_ref + TimeDelta(1*u.day)).__str__()[:10]
+    def __init__(self, start, end, camera_id=801):
+        start = start.__str__()
+        end = end.__str__()
 
         # Now query 
-        qry = 'select time_utc, psf_med_fwhm, psf_rms_fwhm, focus_gauge from psf_log where (time_utc between "{:}" and "{:}") AND camera_id={:};'.format(yesterday, tommorow, camera_id)
+        qry = 'select time_utc, psf_med_fwhm, psf_rms_fwhm, focus_gauge from psf_log where (time_utc between "{:}" and "{:}") AND camera_id={:};'.format(start, end, camera_id)
         with open_db(cur_class='dict') as cur:
             cur.execute(qry)
             result = cur.fetchall()
@@ -141,7 +139,8 @@ if __name__=="__main__":
     for key in action_info.keys(): print('\t\t{:<15} : {:}'.format(key, action_info[key])) 
 
     # Now we can create the interpolater for paladins FWHM
-    paladin_fwhm = get_autoguider_information(start = action_info['actual_start_utc'], end = action_info['actual_end_utc'], action_info['camera_id'])
+    print('Getting Palading FWHM info')
+    paladin_fwhm = paladin_psf_interpolater(start = action_info['actual_start_utc'], end = action_info['actual_end_utc'], camera_id=action_info['camera_id'])
 
     # Now check for AG reference image with valid WCS
     print('\tAutoguider information')
@@ -285,7 +284,6 @@ if __name__=="__main__":
     table_dtype = np.tile(float,len(table_header))
     total_table = Table(names=table_header, dtype=table_dtype) 
 
-
     for i in range(len(images_information))[:]:
         phot_file = '{:}/IMAGE{:}.phot'.format(output_directory, images_information[i]['image_id'])
         print('\t\tCollecting {:} [{:,} out of {:,}]'.format(phot_file.split('/')[-1], i+1, len(images_information)))
@@ -301,6 +299,11 @@ if __name__=="__main__":
         data = data.flatten() 
         data = np.concatenate((np.array(row), data))
         total_table.add_row(data)
+
+    # Now add the Paladin FWHM info 
+    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.psf_med_fwhm) , name = 'PALADIN_PSF_MED_FWHM' ), index=4)
+    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.psf_rms_fwhm) , name = 'PALADIN_PSF_RMS_FWHM' ), index=5)
+    total_table.add_column(Column( np.interp(total_table['JD'], paladin_fwhm.mjd+2400000.5 , paladin_fwhm.focus_gauge) , name = 'PALADIN_FOCUS_GAUGE' ), index=6)
 
     print('\tSaving collected photometry')
     date = Time(np.array(total_table['JD'])[0], format='jd').datetime.isoformat()[:10]
