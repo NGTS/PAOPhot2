@@ -140,7 +140,7 @@ def generate_movie(image_directory, output_filename, fps=15, use_mencoder=False)
 def worker(i):
     # load the image data
     image_path = check_image_location(action_info['das_id'], args.action, images_information[i]['image_id'])  
-    image_data = fits.open(image_path)[0].data 
+    image_data = fits.open(image_path)[0].data[:, 20:2068]
     JD, _, _ = convert_MJD(images_information[i]['mjd'],0,0)
 
     # Get image scaling
@@ -152,7 +152,7 @@ def worker(i):
     # Plot image
     f = plt.figure() 
     ax = plt.gca()
-    im = plt.imshow(image_data[::-1,:], cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
+    im = plt.imshow(image_data, cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
 
     # Now plot circle aperture 
     c=Circle((args.x, args.y), radius=3., color='k', fill=False)
@@ -173,7 +173,6 @@ def worker(i):
 if __name__=="__main__":
     # First, pars the arguments
     args = arg_parse()
-    args.x = 2048 - args.x
 
     # Now get an image list
     images_information = get_images_information_for_action(args.action)
