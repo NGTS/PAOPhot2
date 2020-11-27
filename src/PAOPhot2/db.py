@@ -192,6 +192,6 @@ def get_actions_for_object(obejct):
 def get_focus_positions_for_datetime(datetime):
     cmd = 'select MIN(ABS(TIMESTAMPDIFF(SECOND, time_utc , "{:}" ))) time_utc, TIMESTAMPDIFF(SECOND, time_utc , "{:}" ) from psf_log order by ABS(TIMESTAMPDIFF(SECOND, time_utc , "{:}" )) ASC limit 1;'.format(datetime,datetime,datetime)
     with open_db(cur_class='dict') as cur:
-        cur.execute(qry)
+        cur.execute(cmd)
         result = cur.fetchone()
     return result
