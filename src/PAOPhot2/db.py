@@ -188,9 +188,9 @@ def get_actions_for_object(obejct):
         result = cur.fetchall()
     return result
 
-
+ # select ABS(TIMESTAMPDIFF(SECOND, time_utc , "2020-11-26 08:31:16" )) delta_seconds, time_utc, psf_med_fwhm, psf_rms_fwhm, focus_gauge  from psf_log order by ABS(TIMESTAMPDIFF(SECOND, time_utc , "2020-11-26 08:31:16" )) ASC limit 1;
 def get_focus_positions_for_datetime(datetime):
-    cmd = 'select MIN(ABS(TIMESTAMPDIFF(SECOND, time_utc , "{:}" ))) SEC_DIFF from psf_log order by ABS(TIMESTAMPDIFF(SECOND, time_utc , "{:}" )) ASC limit 1;'.format(datetime,datetime,datetime)
+    cmd = 'select ABS(TIMESTAMPDIFF(SECOND, time_utc , "{:}" )) delta_seconds, time_utc, psf_med_fwhm, psf_rms_fwhm, focus_gauge  from psf_log order by ABS(TIMESTAMPDIFF(SECOND, time_utc , "{:}" )) ASC limit 1;'.format(datetime,datetime)
     with open_db(cur_class='dict') as cur:
         cur.execute(cmd)
         result = cur.fetchone()
