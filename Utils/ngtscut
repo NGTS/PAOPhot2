@@ -173,7 +173,8 @@ def worker(i):
 if __name__=="__main__":
     # First, pars the arguments
     args = arg_parse()
-
+    args.x = 2048 - args.x
+    
     # Now get an image list
     images_information = get_images_information_for_action(args.action)
     action_info = get_action_info(args.action) 
