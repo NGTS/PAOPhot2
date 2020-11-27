@@ -155,16 +155,16 @@ def worker(i):
     im = plt.imshow(image_data[:,::-1], cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
 
     # Now plot circle aperture 
-    c=Circle((args.y, args.x), radius=3., color='k', fill=False)
+    c=Circle((args.x, args.y), radius=3., color='k', fill=False)
     ax.add_artist(c)
-    c=Circle((args.y, args.x), radius=5., color='k', fill=False)
+    c=Circle((args.x, args.y), radius=5., color='k', fill=False)
     ax.add_artist(c)
-    c=Circle((args.y, args.x), radius=8., color='k', fill=False)
+    c=Circle((args.x, args.y), radius=8., color='k', fill=False)
     ax.add_artist(c)
 
     # Now format plot
     title_text = 'Action : {:}\nDAS : {:} Camera {:}\n{:}'.format(args.action, action_info['das_id'] , action_info['camera_id'] , JD.datetime.isoformat() )
-    ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(args.y - args.width , args.y + args.width) , ylim = (args.x - args.width , args.x + args.width))
+    ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(args.x - args.width , args.x + args.width) , ylim = (args.y - args.width , args.y + args.width))
     plt.tight_layout()
     plt.savefig('{:}/{:05}.png'.format(output_directory,i))
     plt.close()
