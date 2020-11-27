@@ -164,7 +164,7 @@ def worker(i):
 
     # Now format plot
     title_text = 'Action : {:}\nDAS : {:} Camera {:}\n{:}'.format(args.action, action_info['das_id'] , action_info['camera_id'] , JD.datetime.isoformat() )
-    ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(args.x - args.width , args.x + args.width) , ylim = (args.y - args.width , args.y + args.width))
+    ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(args.y - args.width , args.y + args.width) , ylim = (args.x - args.width , args.x + args.width))
     plt.tight_layout()
     plt.savefig('{:}/{:05}.png'.format(output_directory,i))
     plt.close()
