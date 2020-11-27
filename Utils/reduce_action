@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import subprocess
 import argparse, os, sys
-from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information
+from PAOPhot2.db import is_action_ready_to_reduce, get_action_info , get_images_information_for_action, get_image_information, PAOPhot_paths , get_autoguider_information , get_focus_positions_for_datetime , open_db
 #from PAOPhot2.make_photometry_catalogue import make_TIC_target_catalogue
 from PAOPhot2.time_conversion import convert_MJD
 from PAOPhot2.plot_functions import plot_target_night
@@ -58,6 +58,7 @@ def arg_parse():
     return p.parse_args()
 
 
+
 def check_image_location(das_id, action, image_id):
     # First check if it hasn't been compressed yet and local
     image_path = '/ngts/das{:02}/action{:}_observeField/IMAGE{:}.fits'.format(das_id, action, image_id)
@@ -100,6 +101,30 @@ def photometry_worker(i):
     #print(cmd)
     #os.system(cmd)
 
+from astropy.time import Time, TimeDelta
+from astropy import units as u
+class paladin_psf_interpolater():
+    def __init__(self, datetime_string, camera_id=801):
+        t_ref = Time(datetime_string, format='isot', scale='utc')
+        #today = t_ref.__str__()[:10]
+        yesterday = (t_ref - TimeDelta(1*u.day)).__str__()[:10]
+        tommorow = (t_ref + TimeDelta(1*u.day)).__str__()[:10]
+
+        # Now query 
+        qry = 'select time_utc, psf_med_fwhm, psf_rms_fwhm, focus_gauge from psf_log where (time_utc between "{:}" and "{:}") AND camera_id={:};'.format(yesterday, tommorow, camera_id)
+        with open_db(cur_class='dict') as cur:
+            cur.execute(qry)
+            result = cur.fetchall()
+
+        self.utcs = np.array([i['time_utc'] for i in result])
+
+        self.mjd = np.array([Time(i).mjd for i in self.utcs])
+        sorted_idxs = np.argsort(self.mjd)
+        self.psf_med_fwhm = np.array([i['psf_med_fwhm'] for i in result])[sorted_idxs]
+        self.psf_rms_fwhm = np.array([i['psf_rms_fwhm'] for i in result])[sorted_idxs]
+        self.focus_gauge = np.array([i['focus_gauge'] for i in result])[sorted_idxs]
+
+
 # Main loop
 if __name__=="__main__":
     # First, pars the arguments
@@ -114,6 +139,9 @@ if __name__=="__main__":
     action_info = get_action_info(args.action) 
     print('\tDetails:')
     for key in action_info.keys(): print('\t\t{:<15} : {:}'.format(key, action_info[key])) 
+
+    # Now we can create the interpolater for paladins FWHM
+    paladin_fwhm = get_autoguider_information(start = action_info['actual_start_utc'], end = action_info['actual_end_utc'], action_info['camera_id'])
 
     # Now check for AG reference image with valid WCS
     print('\tAutoguider information')
