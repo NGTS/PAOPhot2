@@ -408,7 +408,7 @@ if __name__=="__main__":
                                                                         np.median(photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])]),
                                                                         np.median(photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])]))
     print(cmd)
-    #errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3*3600) # 3hr timeout
+    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3*3600) # 3hr timeout
 
     print('Finished.')
 
