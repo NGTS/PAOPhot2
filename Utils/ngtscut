@@ -152,7 +152,7 @@ def worker(i):
     # Plot image
     f = plt.figure() 
     ax = plt.gca()
-    im = plt.imshow(image_data[:,::-1], cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
+    im = plt.imshow(image_data[:,:], cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
 
     # Now plot circle aperture 
     c=Circle((args.x, args.y), radius=3., color='k', fill=False)
