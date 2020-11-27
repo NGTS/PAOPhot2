@@ -150,10 +150,15 @@ def plot_summary_1():
     ylim = (np.min(f_maxflux_bin) - 0.25*diff, np.max(f_maxflux_bin) + 0.25*diff)
     axs[1,0].set(ylabel = 'Max counts [10$^{3}$]', xlabel='JD - {:,}'.format(time_offset),ylim=ylim)
 
-    axs[1,1].plot(time-time_offset,photometry_file['TIC-{:}_sep_image_FWHM_center'.format(target_row['tic_id'][0], args.apstring)], 'k', label = 'SEP near center')
-    axs[1,1].plot(time-time_offset,photometry_file['TIC-{:}_sep_image_FWHM'.format(target_row['tic_id'][0], args.apstring)], 'grey', alpha = 0.2, label='SEP full field')
+    axs[1,1].plot(time-time_offset,photometry_file['SEP_FWHMC'], 'k', label = 'SEP near center')
+    axs[1,1].plot(time-time_offset,photometry_file['SEP_FWHM'], 'grey', alpha = 0.2, label='SEP full field')
+    axs[1,1].fill_between(time-time_offset, photometry_file['PALADIN_PSF_MED_FWHM'] - photometry_file['PALADIN_PSF_RMS_FWHM'],
+                                            photometry_file['PALADIN_PSF_MED_FWHM'] + photometry_file['PALADIN_PSF_RMS_FWHM'], color = 'r', alpha = 0.2)
+    axs[1,1].plot(time-time_offset,photometry_file['PALADIN_PSF_MED_FWHM'], 'r', alpha = 1, label='PSF log')
+
     axs[1,1].set(ylabel = 'FWHM [pix]', xlabel='JD - {:,}'.format(time_offset))
     axs[1,1].legend()
+
 
     # Now plot skycounts and raw flux
     #axs[2,0].plot(time-time_offset,photometry_file['TIC-{:}_Sky_level'.format(target_row['tic_id'][0])]/1e3, 'k', label='Sky counts\nin Aperture')
@@ -384,8 +389,8 @@ if __name__=="__main__":
               'MAX_PIXEL_COUNT_IN_APERTURE',
               'DETRENDED_FLUX', 'DETRENDED_FLUX_ERR']
     header = ' '.join(header)
-    #np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp, header=header)
-
+    try : np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format('/ngts/staging/archive/PAOPhot2/action_lightcurves', target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp, header=header)
+    except : print('Unable to save LC!!!!!!!!!!!')
 
 
     #################################

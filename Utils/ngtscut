@@ -81,10 +81,10 @@ def cut_image(data, X, Y, width):
     else : return  data[ xmin : xmax,    ymin : ymax   ]
 
 def get_lims(data, X, Y, width):
-    xmin = int(np.clip(Y-width, 0, data.shape[1]))
-    xmax = int(np.clip(Y+width, 0, data.shape[1]))
-    ymin = int(np.clip(X-width, 0, data.shape[0]))
-    ymax = int(np.clip(X+width, 0, data.shape[0]))
+    ymin = int(np.clip(Y-width, 0, data.shape[1]))
+    ymax = int(np.clip(Y+width, 0, data.shape[1]))
+    xmin = int(np.clip(X-width, 0, data.shape[0]))
+    xmax = int(np.clip(X+width, 0, data.shape[0]))
     return xmin, xmax , ymin , ymax
 
 
@@ -152,16 +152,19 @@ def worker(i):
     # Plot image
     f = plt.figure() 
     ax = plt.gca()
-    ix0, ix1, iy0, iy1 = get_lims(image_data, args.x, args.y, args.width)
     im = plt.imshow(image_data, cmap=cm.get_cmap('afmhot'), origin='lower', interpolation='None', vmin=zmin, vmax=zmax,  aspect='equal')
 
     # Now plot circle aperture 
     c=Circle((args.x, args.y), radius=3., color='k', fill=False)
     ax.add_artist(c)
+    c=Circle((args.x, args.y), radius=5., color='k', fill=False)
+    ax.add_artist(c)
+    c=Circle((args.x, args.y), radius=8., color='k', fill=False)
+    ax.add_artist(c)
 
     # Now format plot
     title_text = 'Action : {:}\nDAS : {:} Camera {:}\n{:}'.format(args.action, action_info['das_id'] , action_info['camera_id'] , JD.datetime.isoformat() )
-    ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(iy0, iy1) , ylim = (ix0, ix1))
+    ax.set(xlabel = 'X', ylabel = 'Y', title = title_text, xlim=(args.x - args.width , args.x + args.width) , ylim = (args.y - args.width , args.y + args.width))
     plt.tight_layout()
     plt.savefig('{:}/{:05}.png'.format(output_directory,i))
     plt.close()
