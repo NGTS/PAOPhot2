@@ -331,7 +331,7 @@ if __name__=="__main__":
 
     # Now post-process action to plot etc. 
     print('\t\tNow making plots')
-    cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --output_dir {:}  --fieldcam {:} find_best_aperture'.format(photometry_catalogue , total_table_name ,  photometry_catalogue_mask , output_directory , '{:}_{:}_action{:}'.format( action_info['field'], action_info['camera_id'], args.action))
+    cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --output_dir {:}  --fieldcam {:} --find_best_aperture'.format(photometry_catalogue , total_table_name ,  photometry_catalogue_mask , output_directory , '{:}_{:}_action{:}'.format( action_info['field'], action_info['camera_id'], args.action))
     print('\t\t' + cmd)
     #os.system(cmd)
     errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3600) # 1hr timeout
