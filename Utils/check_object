@@ -111,6 +111,6 @@ if __name__=="__main__":
 
 
             print(cmd)
-            #os.system(cmd)
+            os.system(cmd)
 
         print(text)
