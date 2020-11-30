@@ -105,6 +105,11 @@ if __name__=="__main__":
             cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --apstring {:}'.format(photometry_catalogue , photfile , photometry_catalogue_mask, args.apstring)
             if args.find_best_aperture : cmd += ' --find_best_aperture'
 
+            # Now add the output directory
+            ouput_dir = '{:}/action_summaries'.format(PAOPhot_paths['PAOPhot2_data_path'])
+            cmd += ' --output_dir {:}'
+
+
             print(cmd)
             #os.system(cmd)
 
