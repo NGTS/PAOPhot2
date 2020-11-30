@@ -279,7 +279,7 @@ def plot_summary_2():
                                 photometry_file['TIC-{:}_Y_coordinate_centroid'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(target_row['tic_id'][0])],
                                 photometry_file['TIC-{:}_Aper_flux_{:}_max'.format(target_row['tic_id'][0], args.apstring)],
-                                photometry_file['TIC-{:}_Sky_level_{:}'.format(target_row['tic_id'][0], args.apstring)])
+                                photometry_file['TIC-{:}_Sky_level'.format(target_row['tic_id'][0]) if args.apstring=='3' else 'TIC-{:}_Sky_level_{:}'.format(target_row['tic_id'][0], args.apstring)]) # bug here for ap 3 where trailing _{:} isnt there
             text = 'TIC-{:}\nTmag = {:.3f}'.format(target_row['tic_id'][0], target_row['Tmag'][0])
             #axs[i,0].text(-0.8,0.5, text, size=17, ha="center", transform=axs[i,0].transAxes)
             axs[i,0].set_title(text)
@@ -292,7 +292,7 @@ def plot_summary_2():
                                 photometry_file['TIC-{:}_Y_coordinate_centroid'.format(FP_table['tic_id'][i-1])],
                                 photometry_file['TIC-{:}_Y_coordinate_flux_centroid'.format(FP_table['tic_id'][0])],
                                 photometry_file['TIC-{:}_Aper_flux_{:}_max'.format(FP_table['tic_id'][i-1], args.apstring)],
-                                photometry_file['TIC-{:}_Sky_level_{:}'.format(FP_table['tic_id'][i-1], args.apstring)])  
+                                photometry_file['TIC-{:}_Sky_level'.format(FP_table['tic_id'][i-1]) if args.apstring=='3' else 'TIC-{:}_Sky_level_{:}'.format(FP_table['tic_id'][i-1], args.apstring)])  
 
             text = 'TIC-{:}\nTmag = {:.3f}\n$\Delta$Tmag = {:.3f}\n$\Delta$ pix = {:.2f}\n    = {:.0f}"'.format(FP_table['tic_id'][i-1],
                                                                      FP_table['Tmag'][i-1],
@@ -367,7 +367,7 @@ if __name__=="__main__":
 
     # Now save the raw flux in the action folder and in action lightcurves (used for photpack)
     tmp = np.array([np.array(photometry_file['JD']), detrended_flux, detrended_flux_err,]).T
-    np.savetxt('{:}/TIC-{:}_{:}_{:}_FLUX.dat'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]), tmp)
+    np.savetxt('{:}/TIC-{:}_{:}_{:}_AP{:}_FLUX.dat'.format(args.output_dir, target_row['tic_id'][0], args.fieldcam, Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10] , apstring2ap[args.apstring]), tmp)
 
     # Finally, save the normalised lightcurve 
     tmp = np.array([np.array(photometry_file['JD']),normlaised_flux, normlaised_flux_err]).T
@@ -404,7 +404,7 @@ if __name__=="__main__":
 
     # Now make the ngtscut call
     print('Now doing ngtscut')
-    cmd = '/usr/local/anaconda3/bin/ngtscut {:} {:} {:} 30 1'.format(args.photometry_file.split('_')[-2],
+    cmd = '/usr/local/anaconda3/bin/ngtscut {:} {:} {:} 30 5'.format(args.photometry_file.split('_')[-2],
                                                                         np.median(photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])]),
                                                                         np.median(photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])]))
     print(cmd)

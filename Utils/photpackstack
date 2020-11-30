@@ -26,6 +26,10 @@ def arg_parse():
     p.add_argument('--output_dir',
         help='The output directory.',
         type=str, default = '.')
+
+    p.add_argument('--stackmethod',
+        help='The output directory.',
+        type=str, default = 'independent')
     return p.parse_args()
 
 
@@ -56,7 +60,7 @@ def get_normalisation_constant(time, flux):
 
   
 
-def stack_table(tsub):
+def stack_table_independent(tsub):
     unique_actions = np.unique(tsub['action'])
     unique_cameras = np.unique(tsub['CAMERA'])
     print(': found {:,} actions'.format(len(unique_actions)))
@@ -112,6 +116,60 @@ def stack_table(tsub):
     coadded_table = Table(np.array([time, flux, flux_err]).T, names=['JD', 'FLUX', 'FLUX_ERR'])
     coadded_table.write('{:}/{:}_{:}_{:}camera.fits'.format(args.output_dir,tsub['OBJECT'][0], tsub['DATE'][0], len(unique_cameras) ))
 
+def stack_table_coadd(tsub):
+    unique_actions = np.unique(tsub['action'])
+    unique_cameras = np.unique(tsub['CAMERA'])
+    print(': found {:,} actions'.format(len(unique_actions)))
+    
+    # Catch if nothing
+    if len(unique_actions)==1 : return 
+    
+    # now find the max of the mins and mins of the max
+    mins, maxs = [],[] 
+    for i in range(unique_actions.shape[0]) : 
+        mins.append(np.min(tsub[tsub['action']==unique_actions[i]]['JD']))
+        maxs.append(np.max(tsub[tsub['action']==unique_actions[i]]['JD']))
+    cadence = np.median(np.gradient(tsub[tsub['action']==unique_actions[0]]['JD']))
+
+    # Define the wavelength to interpolate to
+    print(np.max(mins), np.min(maxs), cadence)
+    time = np.arange(np.max(mins), np.min(maxs), cadence)
+    print(time.shape)
+    # Now interpolate the flux and error
+    flux, flux_err = np.zeros(time.shape[0]) , np.zeros(time.shape[0])
+    for i in range(unique_actions.shape[0]) : 
+        flux = flux + np.interp(time, tsub[tsub['action']==unique_actions[i]]['JD'] , tsub[tsub['action']==unique_actions[i]]['DETRENDED_FLUX'])
+        flux_err = np.hypot(flux_err , np.interp(time, tsub[tsub['action']==unique_actions[i]]['JD'] , tsub[tsub['action']==unique_actions[i]]['DETRENDED_FLUX_ERR'] ))
+
+    # Now get normilisation constant
+    Nconst = get_normalisation_constant(time, flux)
+    flux = flux / Nconst 
+    flux_err = flux_err / Nconst 
+
+    # Now bin to 13 seconds 
+    time_5, flux_5, flux_err_5 = lc_bin(time, flux, 0.5/24/6)
+    depth = np.max(flux_5) - np.min(flux_5)
+
+    # Now plot
+    f = plt.figure()
+    plt.errorbar(time, flux, yerr=flux_err, markersize=3, fmt='k.', ecolor='lightgrey', alpha = 0.4, label='13-second coadded')
+    plt.errorbar(time_5, flux_5, yerr=flux_err_5, markersize=3, fmt='b.', ecolor='blue', alpha = 1, label='5-minute coadded')
+    plt.ylim(1 - 1.5*depth, 1 + depth)
+    title = '{:}\nNight of {:}\nCameras : {:}'.format(tsub['OBJECT'][0], tsub['DATE'][0], ','.join(unique_cameras))
+    plt.title(title)
+    plt.xlabel('JD')
+    plt.ylabel('Flux')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('{:}/{:}_{:}_{:}camera.png'.format(args.output_dir,tsub['OBJECT'][0], tsub['DATE'][0], len(unique_cameras) )) 
+    plt.close()
+
+    # Now smake the table
+    coadded_table = Table(np.array([time, flux, flux_err]).T, names=['JD', 'FLUX', 'FLUX_ERR'])
+    coadded_table.write('{:}/{:}_{:}_{:}camera.fits'.format(args.output_dir,tsub['OBJECT'][0], tsub['DATE'][0], len(unique_cameras) ))
+
+
+
 if __name__=="__main__":
     # parse the arguemnts
     args = arg_parse()
@@ -131,8 +189,11 @@ if __name__=="__main__":
         tsub = t[t['DATE']==unique_nights[i]]
 
         # Now stack the table
-        try : stack_table(tsub)
-        except : pass
+        if args.stackmethod=='independent':
+            try : stack_table_independent(tsub)
+            except : pass
+        else: stack_table_coadd(tsub)
+
 
 
 
