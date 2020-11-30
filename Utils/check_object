@@ -107,7 +107,7 @@ if __name__=="__main__":
 
             # Now add the output directory
             ouput_dir = '{:}/action_summaries'.format(PAOPhot_paths['PAOPhot2_data_path'])
-            cmd += ' --output_dir {:}'
+            cmd += ' --output_dir {:}'.format(ouput_dir)
 
 
             print(cmd)
