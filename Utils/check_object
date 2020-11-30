@@ -110,7 +110,19 @@ if __name__=="__main__":
             cmd += ' --output_dir {:}'.format(ouput_dir)
 
 
-            print(cmd)
-            os.system(cmd)
+            # Now do the SGE stuff
+            job_file =  '{:}/jobs/PAOPhot_process_action{:}.sh'.format(PAOPhot_paths['PAOPhot2_data_path'], action['action_id'])
+            log_file =  '{:}/logs/PAOPhot_process_action{:}.log'.format(PAOPhot_paths['PAOPhot2_data_path'], action['action_id'])
+
+            f = open(job_file, 'w+')
+            f.write('\n#!/bin/tcsh')
+            f.write('\n#$ -N PAOPhot_process_action{:}'.format(action['action_id']))
+            f.write('\n#$ -o {:}'.format(log_file))
+            f.write('\n#$ -e {:}'.format(log_file))
+            f.write('\n\n{:}'.format(cmd))
+
+            f.close()
+            os.system('/usr/local/sge/bin/lx-amd64/qsub -p -200 -pe mpi 4-8 {:}'.format(job_file))
+            text += ' --> reprocessing'
 
         print(text)
