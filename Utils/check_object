@@ -91,6 +91,8 @@ if __name__=="__main__":
             text += ' --> resubmitted'
 
         if args.process and photometry_done[i]:
+            action = actions[i] 
+
             photometry_catalogue = '{:}target_catalogues/TIC-{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], action['TICID'])
             photometry_catalogue_mask = '{:}target_catalogues/TIC-{:}_mask.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], action['TICID'])
             
