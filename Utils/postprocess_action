@@ -17,6 +17,7 @@ from scipy.stats import sem
 from astropy.time import Time
 from astropy.stats import sigma_clip
 from PAOPhot2.mag_conversion import convertFluxToMags
+from PAOPhot2.db import get_actions_for_object, get_actions_for_field , PAOPhot_paths , get_ticid_from_toi
 import subprocess 
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
@@ -323,7 +324,15 @@ if __name__=="__main__":
     comparison_table = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==2][Table.read(args.photometery_catalogue_mask)['MASK']]
 
     # Now see if we need to find the best aperture
-    if args.find_best_aperture : args.apstring = find_best_aperture()
+    if args.find_best_aperture : 
+        # First, lets check if we need to override the aperture
+        hard_apstring = '{:}/target_catalogues/TIC-{:}_apstring.txt'.format(PAOPhot_paths['PAOPhot2_data_path'], target_row['tic_id'][0])
+        print('Looking for {:}'.format(hard_apstring))
+        if os.path.isfile(hard_apstring) : 
+            args.apstring = open(hard_apstring, 'r').readline().strip()
+        else:
+            print('Not found, doing RMS test.')
+            args.apstring = find_best_aperture()
 
     # Now lets get the flux
     print('Extracting target and comparison fluxes')
