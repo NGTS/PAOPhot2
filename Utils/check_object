@@ -102,7 +102,7 @@ if __name__=="__main__":
                 continue 
 
             # Make the call
-            cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --apstring {:}'.format(photometry_catalogue , photfile , photometry_catalogue_mask, args.apstring)
+            cmd = '/usr/local/anaconda3/bin/postprocess_action {:} {:} --photometery_catalogue_mask {:} --apstring {:}'.format(photometry_catalogue , photfile[0] , photometry_catalogue_mask, args.apstring)
             if args.find_best_aperture : cmd += ' --find_best_aperture'
 
             # Now add the output directory
