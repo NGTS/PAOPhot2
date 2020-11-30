@@ -21,6 +21,12 @@ def arg_parse():
                    help='The name of the object to check actions for.',
                    type=str, default='None')
     p.add_argument('--submit', action="store_true", default=False, help='Submit the SGE job to reduce the action.')
+    p.add_argument('--process', action="store_true", default=False, help='Submit the SGE job to reduce the action.')
+    p.add_argument('--apstring',
+                   help='The name of the object to check actions for.',
+                   type=str, default='3')
+    p.add_argument('--find_best_aperture', action="store_true", default=False)
+
     return p.parse_args()
 
 
@@ -83,5 +89,21 @@ if __name__=="__main__":
             f.close()
             os.system('/usr/local/sge/bin/lx-amd64/qsub -p -200 -pe mpi 4-8 {:}'.format(job_file))
             text += ' --> resubmitted'
+
+        if args.process and photometry_done[i]:
+            photometry_catalogue = '{:}target_catalogues/TIC-{:}.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], action['TICID'])
+            photometry_catalogue_mask = '{:}target_catalogues/TIC-{:}_mask.fits'.format(PAOPhot_paths['PAOPhot2_data_path'], action['TICID'])
+            
+            # Check catalogue exists 
+            if not os.path.isfile(photometry_catalogue_mask):
+                print('Catalogue not found, we need to make it.')
+                continue 
+
+            # Make the call
+            cmd = '/usr/local/anaconda3/bin/reduce_action {:} {:} --photometery_catalogue_mask {:} --apstring {:}'.format(photometry_catalogue , photfile , photometry_catalogue_mask, args.apstring)
+            if args.find_best_aperture : cmd += ' --find_best_aperture'
+
+            print(cmd)
+            #os.system(cmd)
 
         print(text)

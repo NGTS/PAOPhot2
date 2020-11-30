@@ -13,6 +13,8 @@ from astropy.table import Table
 import numpy as np 
 from scipy.ndimage import median_filter
 import matplotlib.gridspec as gridspec
+from scipy.stats import sem
+from astropy.time import Time
 
 # Tmag limit for bright objects
 # RMS VS Mag (against the mean)
@@ -39,8 +41,81 @@ def arg_parse():
     p.add_argument('--output_dir',
                    help='The output directory.',
                    type=str, default = '.')
+    p.add_argument('--apstring',
+        help='The aperture suffix to use [default is 3.].',
+        type=str, default = '3')
+    p.add_argument('--find_best_aperture', action="store_true", default=False)
     return p.parse_args()
 
+apstring2ap = {'3' : 3.0 , '35' : 3.5, '40' : 4.0, '45' : 4.5, '50' : 5.0, '55' : 5.5, '60' : 6.0, '65' : 6.5 , '70' : 7.0, '75' : 7.5, '80' : 8.0}
+
+
+def lc_bin(time, flux, bin_width):
+        '''
+        Function to bin the data into bins of a given width. time and bin_width 
+        must have the same units
+        '''
+        
+        edges = np.arange(np.min(time), np.max(time), bin_width)
+        dig = np.digitize(time, edges)
+        time_binned = (edges[1:] + edges[:-1]) / 2
+        flux_binned = np.array([np.nan if len(flux[dig == i]) == 0 else flux[dig == i].mean() for i in range(1, len(edges))])
+        err_binned = np.array([np.nan if len(flux[dig == i]) == 0 else sem(flux[dig == i]) for i in range(1, len(edges))])
+        time_bin = time_binned[~np.isnan(err_binned)]
+        err_bin = err_binned[~np.isnan(err_binned)]
+        flux_bin = flux_binned[~np.isnan(err_binned)]   
+        
+        return time_bin, flux_bin, err_bin
+
+def find_best_aperture():
+    plt.rcParams.update({'font.size': 5})
+    # verbose 
+    print('Finding best aperture...')
+    
+    # If we are here, we need to find the best apertures from 3 to 8 pixels in half pixel steps
+    apertures = ['3','35','40', '45', '50', '55', '60', '65', '70', '75','80']
+    
+    # First, lets check the aperture were actually extracted
+    for ap in apertures:
+        if 'TIC-{:}_Aper_flux_{:}'.format(target_row['tic_id'][0], ap) not in photometry_file.colnames:
+            print('{:} is not a column name, photometry was focused.'.format('TIC-{:}_Aper_flux_{:}'.format(target_row['tic_id'][0], ap)))
+            return apertures[0] 
+    
+    # Now lets get the scatter for each
+    STDs = np.zeros(len(apertures), dtype = np.float32)
+    print('Cycling apertures...')
+    x = photometry_file['JD'] - int(np.min(photometry_file['JD']))
+    ncols = 4
+    nrows = 3
+    f, ax = plt.subplots(nrows=3, ncols=4, figsize = (12,8))
+    for i in range(STDs.shape[0]):
+        plot_idxi, plot_idxj = i // ncols, np.mod(i,ncols) #-1
+        f_ = photometry_file['TIC-{:}_Aper_flux_{:}'.format(target_row['tic_id'][0], apertures[i])]
+        trend = np.poly1d(np.polyfit(x, f_, 3))(x)
+        STDs[i] = np.std( (f_ / trend) - 1)
+        x_bin, f_bin, f_bin_err = lc_bin(x, f_, 0.5/24/6)
+        ax[plot_idxi, plot_idxj].scatter(x, f_/1000, c='grey', s=1)
+        ax[plot_idxi, plot_idxj].errorbar(x_bin, f_bin/1e3, f_bin_err/1e3 , fmt='b.')
+        ax[plot_idxi, plot_idxj].plot(x, trend/1000 , 'r', zorder=10)
+        diff = np.max(trend) - np.min(np.poly1d(np.polyfit(x, f_, 3))(x))
+        ax[plot_idxi, plot_idxj].set(xlabel='JD - {:,}'.format(int(np.min(photometry_file['JD']))), ylabel='Raw flux [10$^{3}$]', title = 'Aperture {:} pix\n'.format(apstring2ap[apertures[i]]) + '$\sigma$ = ' + '{:.3f} %'.format(100*STDs[i]), ylim = ((np.min(trend) - 0.25*diff) / 1e3, (np.max(trend) + 0.25*diff)/1e3) )
+        
+
+    ax[2,3].plot([3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8], 100*STDs, 'k')
+    ax[2,3].axvline([3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8][np.argmin(STDs)], c='r')
+    ax[2,3].set(xlabel='Aperture size', ylabel='Scatter [%]')
+    
+
+    plt.tight_layout()
+    plt.savefig('{:}/TIC-{:}_{:}_aperture_selection.png'.format(args.output_dir, target_row['tic_id'][0], Time(np.array(photometry_file['JD'])[0], format='jd').datetime.isoformat()[:10]))
+    plt.close()
+
+    for i in range(STDs.shape[0]):
+        string = '\tAperture {:.1f} pix has {:.3f}% scatter'.format(apstring2ap[apertures[i]] ,  100*STDs[i])
+        if i==np.argmin(STDs) : string += '  <--- best'
+        print(string)
+
+    return apertures[np.argmin(STDs)]
 
 
 # Main loop
@@ -56,15 +131,19 @@ if __name__=="__main__":
     # Now get the target information and comparison information
     target_row = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==0]
     comparison_table = photometery_catalogue[photometery_catalogue['PAOPHOT_IDX']==2] 
+
+    # Now see if we need to find the best aperture
+    if args.find_best_aperture : args.apstring = find_best_aperture()
+    
     negative_flux_comp_mask = np.zeros(len(comparison_table), dtype = np.bool)
     for i in range(len(comparison_table)):
-        if np.median( photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])] ) < 0 : negative_flux_comp_mask[i] = True
-        if np.sum(photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])]/(3**2*np.pi) > 50000) > 50 : negative_flux_comp_mask[i] = True # catches saturated stars
+        if np.median( photometry_file['TIC-{:}_Aper_flux_{:}'.format(comparison_table['tic_id'][i] , args.apstring)]) < 0 : negative_flux_comp_mask[i] = True
+        if np.sum(photometry_file['TIC-{:}_Aper_flux_{:}'.format(comparison_table['tic_id'][i] , args.apstring)]/(3**2*np.pi) > 50000) > 50 : negative_flux_comp_mask[i] = True # catches saturated stars
     tic_ids = np.array(['TIC-{:}'.format(i) for i in comparison_table['tic_id']]) 
 
     # Now lets get the flux columns
     print('Extracting target and comparison fluxes')
-    target_flux = np.array(photometry_file['TIC-{:}_Aper_flux_3'.format(target_row['tic_id'][0])])
+    target_flux = np.array(photometry_file['TIC-{:}_Aper_flux_{:}'.format(target_row['tic_id'][0] , args.apstring)])
     comparison_flux = np.zeros((len(comparison_table) , len(photometry_file)))
     for i in range(len(comparison_table)) : comparison_flux[i]  = photometry_file['TIC-{:}_Aper_flux_3'.format(comparison_table['tic_id'][i])]
     x = np.arange(comparison_flux.shape[0]) # indexes of each comparison star
