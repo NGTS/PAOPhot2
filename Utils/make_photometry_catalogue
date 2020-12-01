@@ -60,7 +60,7 @@ if __name__=='__main__':
     x, y = frame_wcs.all_world2pix(reference_catalogue['ra_deg'],reference_catalogue['dec_deg'],0)
     xtarget, ytarget = frame_wcs.all_world2pix(target_row['ra_deg'][0],target_row['dec_deg'][0],0)
     R_dist = np.hypot(x-xtarget, y-ytarget)
-    FP_mask = (R_dist < 6.) | ((R_dist < 12.) & ( reference_catalogue['Tmag'] < target_row['Tmag'][0]))
+    FP_mask = (R_dist < 24.) | ((R_dist < 48.) & ( reference_catalogue['Tmag'] < target_row['Tmag'][0]))
     FP_table = reference_catalogue[FP_mask]
 
     ###############################################################
