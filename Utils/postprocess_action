@@ -48,6 +48,7 @@ def arg_parse():
         help='The aperture suffix to use [default is 3.].',
         type=str, default = '3')
     p.add_argument('--find_best_aperture', action="store_true", default=False)
+    p.add_argument('--ngtscut', action="store_true", default=False)
 
     return p.parse_args()
 
@@ -412,14 +413,15 @@ if __name__=="__main__":
 
 
     # Now make the ngtscut call
-    print('Now doing ngtscut')
-    cmd = '/usr/local/anaconda3/bin/ngtscut {:} {:} {:} 30 5'.format(args.photometry_file.split('_')[-2],
-                                                                        np.median(photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])]),
-                                                                        np.median(photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])]))
-    print(cmd)
-    errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3*3600) # 3hr timeout
+    if args.ngtscut:
+        print('Now doing ngtscut')
+        cmd = '/usr/local/anaconda3/bin/ngtscut {:} {:} {:} 30 5'.format(args.photometry_file.split('_')[-2],
+                                                                            np.median(photometry_file['TIC-{:}_X_coordinate'.format(target_row['tic_id'][0])]),
+                                                                            np.median(photometry_file['TIC-{:}_Y_coordinate'.format(target_row['tic_id'][0])]))
+        print(cmd)
+        errcode = subprocess.call(cmd, shell=True, stderr=subprocess.STDOUT, timeout=3*3600) # 3hr timeout
 
-    print('Finished.')
+        print('Finished.')
 
 
     exit()
